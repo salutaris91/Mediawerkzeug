@@ -65,3 +65,9 @@ gui/server_backup.py
 
 # Serena MCP Server
 .serena/
+.env.local
+.mcp.json
+.worktrees/
+*eskalation.md
+*-state.json
+scripts/gate-a2/logs/

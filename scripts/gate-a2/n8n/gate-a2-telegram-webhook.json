@@ -1,0 +1,83 @@
+{
+  "name": "Gate A2/A3 Eskalations-Benachrichtigung (Telegram)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "gate-a2-escalation",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "webhook-gate-a2",
+      "name": "Webhook: Gate-A2 Eskalation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrahiere den vollstaendigen build_escalation()-Text aus dem Webhook-Payload\nconst payload = $input.first().json.body || $input.first().json;\n\nconst task = payload.task || 'Unbekannte Aufgabe';\nconst status = payload.status || 'ESCALATED';\nconst rounds = payload.round || '?';\nconst escalationText = payload.escalation_text || '';\nconst timestamp = payload.timestamp || new Date().toISOString();\n\nlet message = '';\nif (escalationText) {\n  message = `🚨 *Gate-A2 Eskalation* (Runde ${rounds})\\n\\n${escalationText}`;\n} else {\n  message = `🚨 *Gate-A2 Eskalation* (Runde ${rounds})\\n\\n*Aufgabe:* ${task}\\n*Status:* ${status}\\n*Zeitstempel:* ${timestamp}\\n\\nBitte pruefe die Datei \\`a2-eskalation.md\\` oder Open WebUI zur Diagnose.`;\n}\n\n// Telegram-Zeichenlimit sicherstellen (max 4096 Zeichen)\nif (message.length > 4000) {\n  message = message.substring(0, 3950) + '\\n\\n... [Nachricht gekuerzt, siehe a2-eskalation.md]';\n}\n\nreturn [\n  {\n    json: {\n      text: message,\n      task: task,\n      status: status,\n      round: rounds\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "format-message",
+      "name": "Format Message"
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.text }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "telegram-send",
+      "name": "Telegram: Send Escalation"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook: Gate-A2 Eskalation": {
+      "main": [
+        [
+          {
+            "node": "Format Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Message": {
+      "main": [
+        [
+          {
+            "node": "Telegram: Send Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "gate-a2-v1",
+  "id": "gate-a2-telegram-webhook",
+  "tags": []
+}
