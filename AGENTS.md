@@ -308,6 +308,18 @@ fuer diese Aufgabe sinnvoll sind.
   lohnt sich vor allem bei echter Feature-Arbeit.
 - Vorlage: `VERLAUF.template.md`.
 
+### ROADMAP.md — Zurückgestellte Erwägungen & Backlog
+
+- `ROADMAP.md` ist die **eingecheckte, dauerhafte Sammlung** von Architektur-
+  entscheidungen, technischen Schulden, zurückgestellten Erwägungen und Ideen.
+- Nichts wird stillschweigend gelöscht: Offene Punkte bleiben stehen (`[ ]`),
+  erledigte werden auf `[x] erledigt` gesetzt, verworfene auf `[~] verworfen`
+  (mit kurzer Begründung).
+- Nicht sofort umgesetzte, aber relevante Sicherheits- oder Architekturerwägungen
+  gehören zwingend in `ROADMAP.md`, damit sie bei künftigen Entwicklungs-
+  schritten nicht verloren gehen.
+- Vorlage: `ROADMAP.template.md`.
+
 ### Abschluss jeder Coding-Aufgabe
 
 Am Ende jeder Coding-Aufgabe die Abschluss-Routine abarbeiten (siehe
@@ -352,6 +364,7 @@ Nach jeder Coding-Aufgabe ausgeben:
 - [ ] Doku aktualisiert, falls sich Verhalten geändert hat
 <!-- WORKER-SAFE:END -->
 - [ ] STAND.md nachgeführt (nur aktueller Stand)
+- [ ] Zurückgestellte Sicherheits-/Architekturerwägungen in ROADMAP.md eingetragen
 - [ ] Abschlusszusammenfassung ausgegeben
 
 ### Fix-Checkliste (zusätzlich bei Bugfixes)
