@@ -436,10 +436,10 @@ Co-Authored-By: AI Coding Assistant <noreply@github.com>
      ```
      `docker compose up -d` erstellt nur die Container mit geändertem Image neu — kein `git`, kein `--build`, kein vorheriges `down` nötig.
 
-- **Verifikation danach:** (Befehle unten sind Vorschlag, noch nicht live gegen das NAS getestet — beim ersten echten Einsatz gegenprüfen.)
-  - Erreichbarkeit: `curl -s http://<NAS-Host>:<Port>/api/healthz` → erwartet `{"ok": true}`. Bestätigt nur, dass der Container läuft — **nicht**, dass die neue Version drin ist (ein hängengebliebenes altes Image antwortet identisch).
-  - Version wirklich bestätigen: die ausgelieferte Cache-Busting-Versionsnummer prüfen, z. B. `curl -s http://<NAS-Host>:<Port>/ | grep -o 'app.js?v=[0-9]*'` und mit dem aktuellen Stand in `gui/static/index.html` im gemergten Commit abgleichen.
-  - Alternativ: Image-Alter des laufenden Containers gegen den Merge-Zeitpunkt prüfen: `docker inspect --format '{{.Created}}' <container-name>`.
+- **Verifikation danach:** (Live gegen das NAS verifiziert, 01.09.2026 — Update `v90`→`v91` real bestätigt, nicht nur angenommen.)
+  - Erreichbarkeit: `ssh nas-ts "curl -s http://localhost:5811/api/healthz"` → erwartet `{"ok": true}`. Bestätigt nur, dass der Container läuft — **nicht**, dass die neue Version drin ist (ein hängengebliebenes altes Image antwortet identisch).
+  - Version wirklich bestätigen: `ssh nas-ts "curl -s http://localhost:5811/ | grep -o 'app.js?v=[0-9]*'"` und mit dem aktuellen Stand in `gui/static/index.html` im gemergten Commit abgleichen.
+  - Alternativ: Image-Alter des laufenden Containers gegen den Merge-Zeitpunkt prüfen (Arbeitsverzeichnis wichtig, sonst "no configuration file provided"): `ssh nas-ts "cd ~/medienwerkzeug && docker inspect --format '{{.Created}}' \$(docker compose ps -q | head -1)"`.
 
 - **Worauf achten / Rollback:**
   - Kein automatisierter Rollback-Mechanismus. Rollback bedeutet: vorheriges Image-Tag/-Digest gezielt pullen (falls in der Registry noch vorhanden) statt `latest`, dann erneut `docker compose up -d`.
