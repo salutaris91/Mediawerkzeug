@@ -1646,3 +1646,27 @@ Im Wizard mehrere Dienste gleichzeitig auswählen; Schritt 2 zeigt pro Feld, wel
 
 ### Aufwand (grob)
 Mittel–groß: neue Vergleichs-UI und API-Erweiterung; Schreibpfad bleibt unverändert.
+
+---
+
+## 56. SCAN_VERSION-Bump-Absicherung für Roadmap-Item 53 Schritt 2
+
+**Einordnung / Priorität:** Testabdeckung, Regressionsschutz / Folgeabsicherung zu Item 53.
+
+**Problem:**
+Analog zum Cache-Busting-Problem (K1) besteht beim späteren Entfernen von `severity` aus dem Health-Cache (Schritt 2 von Item 53) das Risiko, dass sich das Cache-Schema ändert, ohne dass `SCAN_VERSION` in `health_cache.py` erhöht wird. Dies würde nach dem gleichen Muster wie bei K1 zu stillen Cache-Inkonsistenzen und Fehlern bei bestehenden Installationen mit Alt-Caches führen.
+
+**Lösungsidee:**
+Ein dedizierter Regressionstest (analog zu den Cache-Busting-Tests), der verifiziert, dass `SCAN_VERSION` in `gui/core/health_cache.py` korrekt gebumpt wird bzw. mit dem aktuellen Schema-Vertrag übereinstimmt, sobald schema-relevante Felder (wie `severity`) aus dem Cache entfernt oder modifiziert werden.
+
+---
+
+## 57. Zentrales Versions-Bump-Skript für Frontend-Assets
+
+**Einordnung / Priorität:** Tooling, Wartbarkeit & Fehlervorbeugung (Folge aus K1).
+
+**Problem:**
+Aktuell muss die Cache-Busting-Versionsnummer bei Frontend-Änderungen an mehreren verstreuten Stellen manuell nachgezogen werden (`app.js` inklusive aller relativen Modul-Importe wie `utils.js` und `format.js` sowie `style.css` und `utilities.css` in HTML/Templates). Werden dabei einzelne Referenzen übersehen, laufen die Versionen auseinander (wie es vor dem K1-Fix der Fall war), was zu veralteten Teilmodulen im Browser-Cache führt.
+
+**Lösungsidee:**
+Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das die Cache-Busting-Versionsnummer für `app.js` (inkl. aller eigenen Modul-Importe), `style.css` und `utilities.css` automatisiert und konsistent an einer zentralen Stelle hochzählt, statt manuell mehrere Dateien einzeln bearbeiten zu müssen.
