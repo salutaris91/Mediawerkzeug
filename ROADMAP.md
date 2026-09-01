@@ -58,6 +58,10 @@ die aktive After-Release-Roadmap übernommen.
 | 49 | Bibliotheks-Scan: Teilscan ohne Medienserver & dynamische Kategorieauswahl | erledigt | klein–mittel |
 | 50 | NFO-Agent: Mapping- und Review-Editor extrahieren (Ansatz C) | geplant | mittel |
 | 51 | NFO-Agent Vollständigkeit: FSK/Genre/Artwork | teilweise | klein–mittel |
+| 52 | NFO-Agent: Mehrstufiger Wizard (Quelle wählen → Prüfen & Bearbeiten) | geplant | mittel |
+| 53 | Health-Check: Schweregrade aus der Oberfläche entfernen | geplant | klein–mittel |
+| 54 | Metadatendienste: Alle Abrufe auf den Retry-Helfer umstellen | geplant | mittel |
+| 55 | NFO-Agent: Multi-Provider-Metadatenvergleich mit Feld-Badges | geplant | mittel–groß |
 
 ---
 
@@ -1150,7 +1154,7 @@ Parallelitätsgrenzen.
 
 ## 39. Frontend-Resilienz: Double-Check bei vereinzelten 401-Fehlern
 
-**Einordnung / Priorität:** Defense-in-Depth, niedrige Priorität. Die ursprünglich beobachteten "Phantom-Logouts" hatten eine Backend-Ursache (`session.clear()` schickte auf cookielosen Requests einen `Set-Cookie`-Lösch-Header und löschte so das gültige Login-Cookie). Diese Ursache ist mit #58 behoben. Dieser Eintrag adressiert nur noch die verbleibende Sprödigkeit im Frontend, nicht den eigentlichen Bug.
+**Einordnung / Priorität:** Defense-in-Depth, niedrige Priorität. Die ursprünglich beobachteten "Phantom-Logouts" hatten eine Backend-Ursache (`session.clear()` schickte auf cookielosen Requests einen `Set-Cookie`-Lösch-Header und löschte so das gültige Login-Cookie). Diese Ursache ist in `gui/core/auth_middleware.py` (siehe Kommentar zum Set-Cookie-Löschproblem) behoben. Dieser Eintrag adressiert nur noch die verbleibende Sprödigkeit im Frontend, nicht den eigentlichen Bug.
 
 **Problem:**
 Der globale `fetch`-Interceptor in `gui/static/app.js` (siehe `response.status === 401`) ruft bei *jedem* 401 hart `showLoginScreen()` auf — auch wenn das Session-Cookie intakt ist und nur eine einzelne Hintergrundanfrage (Statistiken, Logs) abgewiesen wurde. Mögliche Auslöser für ein vereinzeltes 401 ohne echten Sessionverlust: ein `fetch()` ohne `credentials`, `SameSite`-Konflikte, Safari ITP oder ein abgelaufenes Cookie. (Ein VPN gehört ausdrücklich *nicht* dazu — es arbeitet auf Netzwerkebene und verändert keine HTTP-Header.)
