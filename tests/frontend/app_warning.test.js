@@ -71,12 +71,6 @@ globalThis.window = {
     addEventListener: () => {}
 };
 
-globalThis.HEALTH_SEVERITY = {
-    critical: { icon: "❌", label: "Kritisch", color: "#ef4444" },
-    warning: { icon: "⚠️", label: "Warnung", color: "#f59e0b" },
-    info: { icon: "ℹ️", label: "Info", color: "#3b82f6" }
-};
-
 globalThis.escapeHTML = (str) => str;
 globalThis.renderIgnoredFooter = () => "";
 globalThis.wireRestoreAll = () => {};
@@ -271,28 +265,41 @@ test('renderQueue - pipeline step message uses existing HTML escaping helper', (
     assert.ok(!listEl.innerHTML.includes('<script>alert("x")</script>'));
 });
 
-test('renderHealthStatus - severity grouping renders severity groups and no checkboxes', () => {
-    globalThis.window.healthGroupMode = "severity";
+test('renderHealthStatus - renders summary chips with total and group counts and no severity grouping', () => {
+    globalThis.window.healthGroupMode = "type";
+    const summaryEl = globalThis.document.getElementById("health-summary");
     const issuesEl = globalThis.document.getElementById("health-issues");
+    summaryEl.innerHTML = "";
     issuesEl.innerHTML = "";
 
     const data = {
         status: "done",
         message: "Scan abgeschlossen",
         issues: [
-            { key: "1", type: "missing_nfo", category: "Filme", severity: "critical", message: "Fehlende NFO", path: "/path/to/movie" }
+            { key: "1", type: "missing_nfo", category: "Filme", severity: "critical", message: "Fehlende NFO", path: "/path/to/movie" },
+            { key: "2", type: "missing_poster", category: "Filme", severity: "warning", message: "Fehlendes Poster", path: "/path/to/movie" },
+            { key: "3", type: "small_file", category: "Filme", severity: "warning", message: "Kleine Datei", path: "/path/to/movie/file.mkv" },
+            { key: "4", type: "nested_duplicate", category: "Filme", severity: "warning", message: "Verschachtelter Ordner", path: "/path/to/movie" }
         ],
         finished_at: 1719816000
     };
 
     globalThis.renderHealthStatus(data);
 
-    // Sollte Details für Schweregrad rendern
-    assert.ok(issuesEl.innerHTML.includes('data-sev="critical"'));
-    // Sollte keinen Checkbox-Gruppenselector rendern
-    assert.ok(!issuesEl.innerHTML.includes('class="health-group-select-all"'));
-    assert.ok(issuesEl.innerHTML.includes("Metadaten bearbeiten"));
-    assert.ok(!issuesEl.innerHTML.includes(">NFO Agent</button>"));
+    // Summary-Chips: Gesamt und Gruppen (Metadaten, Artwork, Dateien, Struktur)
+    assert.ok(summaryEl.innerHTML.includes("Gesamt: 4"));
+    assert.ok(summaryEl.innerHTML.includes("Metadaten: 1"));
+    assert.ok(summaryEl.innerHTML.includes("Artwork: 1"));
+    assert.ok(summaryEl.innerHTML.includes("Dateien: 1"));
+    assert.ok(summaryEl.innerHTML.includes("Struktur: 1"));
+    // Keine Schweregrad-Chips mehr
+    assert.ok(!summaryEl.innerHTML.includes("Kritisch"));
+    assert.ok(!summaryEl.innerHTML.includes("Warnung"));
+    assert.ok(!summaryEl.innerHTML.includes("Hinweis"));
+
+    // Keine Schweregrad-Gruppierung mehr
+    assert.ok(!issuesEl.innerHTML.includes('data-sev="critical"'));
+    assert.ok(!issuesEl.innerHTML.includes('data-sev='));
 });
 
 test('renderHealthStatus - type grouping renders type groups, checkboxes and tool-connectors', () => {
