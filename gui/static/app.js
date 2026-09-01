@@ -1,11 +1,11 @@
-import { applyTheme } from './js/theme.js?v=73';
-import { cleanSeriesName } from './js/utils.js?v=73';
-import { formatBytes } from './js/format.js?v=73';
-import { guessSeasonAndEpisode, guessEpisodeNumber, cleanFilenameForManualTitle } from './js/parse.js?v=73';
-import { osBasename, formatFskLabel } from './js/fsk_batch.js?v=73';
-import { fetchStats, fetchYoutubeSubscriptions, fetchSmartInboxSuggestions } from './js/welcome.js?v=73';
-import { loadConversionRecommendations, triggerQualityHintUpdates } from './js/intelligence.js?v=73';
-import { updateMwDataPanel, prepareSeriesPayload } from './js/nfo_ui.js?v=73';
+import { applyTheme } from './js/theme.js?v=91';
+import { cleanSeriesName } from './js/utils.js?v=91';
+import { formatBytes } from './js/format.js?v=91';
+import { guessSeasonAndEpisode, guessEpisodeNumber, cleanFilenameForManualTitle } from './js/parse.js?v=91';
+import { osBasename, formatFskLabel } from './js/fsk_batch.js?v=91';
+import { fetchStats, fetchYoutubeSubscriptions, fetchSmartInboxSuggestions } from './js/welcome.js?v=91';
+import { loadConversionRecommendations, triggerQualityHintUpdates } from './js/intelligence.js?v=91';
+import { updateMwDataPanel, prepareSeriesPayload } from './js/nfo_ui.js?v=91';
 
 // ==========================================================================
 // AUTHENTICATION & CSRF WRAPPER

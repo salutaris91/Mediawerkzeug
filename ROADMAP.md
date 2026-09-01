@@ -58,6 +58,10 @@ die aktive After-Release-Roadmap übernommen.
 | 49 | Bibliotheks-Scan: Teilscan ohne Medienserver & dynamische Kategorieauswahl | erledigt | klein–mittel |
 | 50 | NFO-Agent: Mapping- und Review-Editor extrahieren (Ansatz C) | geplant | mittel |
 | 51 | NFO-Agent Vollständigkeit: FSK/Genre/Artwork | teilweise | klein–mittel |
+| 52 | NFO-Agent: Mehrstufiger Wizard (Quelle wählen → Prüfen & Bearbeiten) | geplant | mittel |
+| 53 | Health-Check: Schweregrade aus der Oberfläche entfernen | geplant | klein–mittel |
+| 54 | Metadatendienste: Alle Abrufe auf den Retry-Helfer umstellen | geplant | mittel |
+| 55 | NFO-Agent: Multi-Provider-Metadatenvergleich mit Feld-Badges | geplant | mittel–groß |
 
 ---
 
@@ -1150,7 +1154,7 @@ Parallelitätsgrenzen.
 
 ## 39. Frontend-Resilienz: Double-Check bei vereinzelten 401-Fehlern
 
-**Einordnung / Priorität:** Defense-in-Depth, niedrige Priorität. Die ursprünglich beobachteten "Phantom-Logouts" hatten eine Backend-Ursache (`session.clear()` schickte auf cookielosen Requests einen `Set-Cookie`-Lösch-Header und löschte so das gültige Login-Cookie). Diese Ursache ist mit #58 behoben. Dieser Eintrag adressiert nur noch die verbleibende Sprödigkeit im Frontend, nicht den eigentlichen Bug.
+**Einordnung / Priorität:** Defense-in-Depth, niedrige Priorität. Die ursprünglich beobachteten "Phantom-Logouts" hatten eine Backend-Ursache (`session.clear()` schickte auf cookielosen Requests einen `Set-Cookie`-Lösch-Header und löschte so das gültige Login-Cookie). Diese Ursache ist in `gui/core/auth_middleware.py` (siehe Kommentar zum Set-Cookie-Löschproblem) behoben. Dieser Eintrag adressiert nur noch die verbleibende Sprödigkeit im Frontend, nicht den eigentlichen Bug.
 
 **Problem:**
 Der globale `fetch`-Interceptor in `gui/static/app.js` (siehe `response.status === 401`) ruft bei *jedem* 401 hart `showLoginScreen()` auf — auch wenn das Session-Cookie intakt ist und nur eine einzelne Hintergrundanfrage (Statistiken, Logs) abgewiesen wurde. Mögliche Auslöser für ein vereinzeltes 401 ohne echten Sessionverlust: ein `fetch()` ohne `credentials`, `SameSite`-Konflikte, Safari ITP oder ein abgelaufenes Cookie. (Ein VPN gehört ausdrücklich *nicht* dazu — es arbeitet auf Netzwerkebene und verändert keine HTTP-Header.)
@@ -1496,7 +1500,7 @@ Der Scan soll robust als Teilscan starten können. Prüfungen, die keinen Medien
 ### Risiken & Hinweise
 - Der genaue Umfang "medienserver-spezifischer Prüfungen" muss vor der Umsetzung im Code abgegrenzt werden, damit nicht versehentlich echte Bibliotheksfehler als übersprungen verschwinden.
 - Falls die Kategorieauswahl aktuell aus Defaults und nicht aus den gespeicherten Settings kommt, muss geprüft werden, ob das nur ein UI-Render-Problem ist oder ob auch der Backend-Scan mit veralteten Kategorien läuft.
-- Nach den Struktur-Fix-Nacharbeiten zusätzlich prüfen, dass der `Auflösen`-Button wirklich den neuen Direkt-Flow lädt (`app.js?v=78`) und nicht durch Browser-/Desktop-Cache weiter die Vorschau öffnet.
+- Nach den Struktur-Fix-Nacharbeiten zusätzlich prüfen, dass der `Auflösen`-Button wirklich den neuen Direkt-Flow lädt (die aktuelle `app.js`-Version) und nicht durch Browser-/Desktop-Cache weiter die Vorschau öffnet.
 
 ### Aufwand (grob)
 Klein–mittel: vor allem Scan-Orchestrierung, Settings-UI-Verknüpfung und Tests. Die Kategoriefrage kann größer werden, falls Frontend und Backend unterschiedliche Quellen für aktive Kategorien verwenden.
@@ -1642,3 +1646,27 @@ Im Wizard mehrere Dienste gleichzeitig auswählen; Schritt 2 zeigt pro Feld, wel
 
 ### Aufwand (grob)
 Mittel–groß: neue Vergleichs-UI und API-Erweiterung; Schreibpfad bleibt unverändert.
+
+---
+
+## 56. SCAN_VERSION-Bump-Absicherung für Roadmap-Item 53 Schritt 2
+
+**Einordnung / Priorität:** Testabdeckung, Regressionsschutz / Folgeabsicherung zu Item 53.
+
+**Problem:**
+Analog zum Cache-Busting-Problem (K1) besteht beim späteren Entfernen von `severity` aus dem Health-Cache (Schritt 2 von Item 53) das Risiko, dass sich das Cache-Schema ändert, ohne dass `SCAN_VERSION` in `health_cache.py` erhöht wird. Dies würde nach dem gleichen Muster wie bei K1 zu stillen Cache-Inkonsistenzen und Fehlern bei bestehenden Installationen mit Alt-Caches führen.
+
+**Lösungsidee:**
+Ein dedizierter Regressionstest (analog zu den Cache-Busting-Tests), der verifiziert, dass `SCAN_VERSION` in `gui/core/health_cache.py` korrekt gebumpt wird bzw. mit dem aktuellen Schema-Vertrag übereinstimmt, sobald schema-relevante Felder (wie `severity`) aus dem Cache entfernt oder modifiziert werden.
+
+---
+
+## 57. Zentrales Versions-Bump-Skript für Frontend-Assets
+
+**Einordnung / Priorität:** Tooling, Wartbarkeit & Fehlervorbeugung (Folge aus K1).
+
+**Problem:**
+Aktuell muss die Cache-Busting-Versionsnummer bei Frontend-Änderungen an mehreren verstreuten Stellen manuell nachgezogen werden (`app.js` inklusive aller relativen Modul-Importe wie `utils.js` und `format.js` sowie `style.css` und `utilities.css` in HTML/Templates). Werden dabei einzelne Referenzen übersehen, laufen die Versionen auseinander (wie es vor dem K1-Fix der Fall war), was zu veralteten Teilmodulen im Browser-Cache führt.
+
+**Lösungsidee:**
+Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das die Cache-Busting-Versionsnummer für `app.js` (inkl. aller eigenen Modul-Importe), `style.css` und `utilities.css` automatisiert und konsistent an einer zentralen Stelle hochzählt, statt manuell mehrere Dateien einzeln bearbeiten zu müssen.
