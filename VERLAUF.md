@@ -2,6 +2,15 @@
 
 Hier befindet sich die kumulative Historie des projektfortschritts, ausgelagert aus `STAND.md`.
 
+## Stand am 01.09.2026 (K1-Cache-Busting-Fix via Kreativteam-Orchestrierung, PR #130 gemergt)
+
+- **Kit-Migration abgeschlossen:** `chore/adopt-ai-coding-kit` (PR #128) und die Kreativteam-Session-Artefakte (PR #129) sind gemergt. `main` trägt jetzt vollständig das AI-Coding-Starter-Kit inkl. Gate A2/A3.
+- **Erster echter End-to-End-Durchlauf der vollen Kit-Orchestrierung** gegen dieses Projekt: Planungsteam (`ceo-planner` + `produktberater`/`advocatus`/`scout`, headless via OpenCode-Bridge) → Ausführungsteam (Gate A2, drei Läufe) → zurück ans Planungsteam (`repo-operator` committet/pusht/erstellt PR) → Alex merged.
+- **Gefixt:** Cache-Busting-Versionsdrift (K1, von `advocatus` gefunden und gegen den echten Code verifiziert) — `app.js`/`index.html` liefen mit drei divergierenden Versionsständen (`?v=73/78/90`) auseinander, `style.css`/`utilities.css` hatten dieselbe Fehlerklasse. Alle jetzt vereinheitlicht (`v91`/`v45`/`v1`) plus drei neue Regressionstests (`tests/frontend/cache_busting.test.js`).
+- **ROADMAP-Hygiene:** Fehlende Tabellenzeilen für Items 52–55 ergänzt, dangling `#58`-Referenz bei Item 39 auf den echten Fix in `auth_middleware.py` korrigiert, veraltete `v78`-Referenz robuster umformuliert. Zwei neue Backlog-Items (56/57): `SCAN_VERSION`-Bump-Absicherung für Item 53 Schritt 2, zentrales Versions-Bump-Skript.
+- **PR:** [#130](https://github.com/salutaris91/Medienwerkzeug/pull/130), gemergt (`14a436c`). Session-Artefakte unter `docs/sessions/2026-09-01-k1-cache-busting-pr/`.
+- **Offen:** Nach GitHub-Actions-Build folgt auf dem NAS `docker compose pull && docker compose up -d`. Roadmap-Item #53 (Health-Schweregrade entfernen) ist der von produktberater/ceo-planner empfohlene nächste Schritt.
+
 ## Stand am 18.07.2026 (OFDb-Filmdetails inkl. FSK im NFO-Agenten)
 
 - **Anlass:** Klick auf ein OFDb-Suchergebnis lief in einen TMDB-404, weil `fetch_movie_nfo_data` keinen OFDb-Zweig hatte und die OFDb-ID in den TMDB-Zweig fiel. Zudem lieferte TMDB für „Killing Faith" keine FSK — verifiziert gegen die Rohdaten (DE-Einträge mit leerem Zertifikat); die OFDb-Seite führt dagegen „Freigabe: FSK 16".
