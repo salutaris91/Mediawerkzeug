@@ -1500,7 +1500,7 @@ Der Scan soll robust als Teilscan starten können. Prüfungen, die keinen Medien
 ### Risiken & Hinweise
 - Der genaue Umfang "medienserver-spezifischer Prüfungen" muss vor der Umsetzung im Code abgegrenzt werden, damit nicht versehentlich echte Bibliotheksfehler als übersprungen verschwinden.
 - Falls die Kategorieauswahl aktuell aus Defaults und nicht aus den gespeicherten Settings kommt, muss geprüft werden, ob das nur ein UI-Render-Problem ist oder ob auch der Backend-Scan mit veralteten Kategorien läuft.
-- Nach den Struktur-Fix-Nacharbeiten zusätzlich prüfen, dass der `Auflösen`-Button wirklich den neuen Direkt-Flow lädt (`app.js?v=78`) und nicht durch Browser-/Desktop-Cache weiter die Vorschau öffnet.
+- Nach den Struktur-Fix-Nacharbeiten zusätzlich prüfen, dass der `Auflösen`-Button wirklich den neuen Direkt-Flow lädt (die aktuelle `app.js`-Version) und nicht durch Browser-/Desktop-Cache weiter die Vorschau öffnet.
 
 ### Aufwand (grob)
 Klein–mittel: vor allem Scan-Orchestrierung, Settings-UI-Verknüpfung und Tests. Die Kategoriefrage kann größer werden, falls Frontend und Backend unterschiedliche Quellen für aktive Kategorien verwenden.

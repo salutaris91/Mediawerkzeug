@@ -46,3 +46,19 @@ test('Cache-Busting: index.html app.js version matches all ES-module import vers
         );
     }
 });
+
+test('Cache-Busting: style.css in index.html has a non-empty ?v= version query', () => {
+    const indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+    const match = indexHtml.match(/<link\s+[^>]*href=["']style\.css\?v=([^"']+)["']/);
+    assert.ok(match, 'index.html must include <link rel="stylesheet" href="style.css?v=...">');
+    const version = match[1];
+    assert.ok(version && version.length > 0, 'index.html style.css version string must not be empty');
+});
+
+test('Cache-Busting: utilities.css in index.html has a non-empty ?v= version query', () => {
+    const indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+    const match = indexHtml.match(/<link\s+[^>]*href=["']utilities\.css\?v=([^"']+)["']/);
+    assert.ok(match, 'index.html must include <link rel="stylesheet" href="utilities.css?v=...">');
+    const version = match[1];
+    assert.ok(version && version.length > 0, 'index.html utilities.css version string must not be empty');
+});
