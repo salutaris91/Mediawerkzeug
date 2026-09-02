@@ -12402,7 +12402,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Feature 3: NAS Bibliotheks-Check (Health Dashboard)
 // ==========================================================================
 let healthPollTimer = null;
-window.healthGroupMode = "severity";
+window.healthGroupMode = "type";
 
 const HEALTH_TYPE_LABELS = {
     missing_age_rating: "Fehlende Altersfreigabe",
@@ -12447,12 +12447,6 @@ const HEALTH_RECOMMENDED_ACTIONS = {
     missing_logo: "Logo / Clearlogo hinzufügen.",
     missing_banner: "Banner hinzufügen.",
     inconsistent_naming: "Seriendateien einheitlich benennen (Renaming-Tool nutzen)."
-};
-
-const HEALTH_SEVERITY = {
-    critical: { label: "Kritisch", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-circle" style="height:14px; width:14px; display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="15" x2="9" y1="9" y2="15"/><line x1="9" x2="15" y1="9" y2="15"/></svg>`, color: "#ef4444" },
-    warning:  { label: "Warnung",  icon: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-triangle" style="height:14px; width:14px; display:inline-block; vertical-align:middle; margin-right:4px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>`, color: "#f59e0b" },
-    info:     { label: "Hinweis",  icon: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info" style="height:14px; width:14px; display:inline-block; vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>`, color: "#3b82f6" },
 };
 
 const HEALTH_MEDIA_NFO_TYPES = new Set(["missing_nfo", "incomplete_nfo", "unreadable_nfo"]);
@@ -12822,24 +12816,13 @@ function initHealthDashboard() {
         cancelBtn.addEventListener("click", cancelHealthScan);
     }
 
-    const btnSev = document.getElementById("btn-health-group-severity");
     const btnType = document.getElementById("btn-health-group-type");
     const btnMedia = document.getElementById("btn-health-group-media");
-    if (btnSev && btnType && btnMedia) {
-        btnSev.addEventListener("click", () => {
-            if (window.healthGroupMode !== "severity") {
-                window.healthGroupMode = "severity";
-                btnSev.classList.add("active");
-                btnType.classList.remove("active");
-                btnMedia.classList.remove("active");
-                pollHealthStatus(false);
-            }
-        });
+    if (btnType && btnMedia) {
         btnType.addEventListener("click", () => {
             if (window.healthGroupMode !== "type") {
                 window.healthGroupMode = "type";
                 btnType.classList.add("active");
-                btnSev.classList.remove("active");
                 btnMedia.classList.remove("active");
                 pollHealthStatus(false);
             }
@@ -12848,7 +12831,6 @@ function initHealthDashboard() {
             if (window.healthGroupMode !== "media") {
                 window.healthGroupMode = "media";
                 btnMedia.classList.add("active");
-                btnSev.classList.remove("active");
                 btnType.classList.remove("active");
                 pollHealthStatus(false);
             }
@@ -13137,10 +13119,9 @@ function renderHealthStatus(data) {
     }
     const overviewHealthSummary = document.getElementById("overview-health-summary");
     if (overviewHealthSummary) {
-        if (data.summary) {
-            const criticalBadge = data.summary.critical > 0 ? `<span style="color:#ef4444; font-weight:600;">${data.summary.critical}</span> kritisch` : `0 kritisch`;
-            const warningBadge = data.summary.warning > 0 ? `<span style="color:#f59e0b; font-weight:600;">${data.summary.warning}</span> warnend` : `0 warnend`;
-            overviewHealthSummary.innerHTML = `${criticalBadge}, ${warningBadge}`;
+        if (data.issues || data.summary) {
+            const count = (data.issues || []).length;
+            overviewHealthSummary.textContent = count > 0 ? `${count} Hinweise` : "Keine Auffälligkeiten";
         } else {
             overviewHealthSummary.textContent = "Keine Daten";
         }
@@ -13193,12 +13174,10 @@ function renderHealthStatus(data) {
                 </div>`;
             }
             structureIssuesEl.innerHTML = batchHeaderHtml + structureIssues.map(it => {
-                const m = HEALTH_SEVERITY[it.severity] || HEALTH_SEVERITY.warning;
                 const previewBtn = `<button class="btn btn-secondary btn-sm health-structure-preview" data-path="${escapeHTML(it.path)}" title="Vorschau der Änderungen anzeigen" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search" style="height:12px; width:12px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Vorschau</button>`;
                 const applyBtn = `<button class="btn btn-primary btn-sm health-structure-apply" data-path="${escapeHTML(it.path)}" title="Ordnerstruktur auflösen" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wrench" style="height:12px; width:12px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Auflösen</button>`;
                 return `<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:0.9em; padding:8px 0; border-top:1px solid rgba(255,255,255,0.04);">
                             <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; color: var(--text-main); font-weight: 500;">
-                                <span style="color:${m.color}; margin-right:4px; display:inline-flex; align-items:center; flex-shrink:0;">${m.icon}</span>
                                 <span style="min-width:0; overflow-wrap:anywhere; word-break:break-word;">${escapeHTML(it.category)} · ${escapeHTML(it.message)}</span>
                             </div>
                             <span style="display:flex; gap:6px; flex-wrap:wrap; white-space:nowrap; flex-shrink:0;">
@@ -13237,14 +13216,11 @@ function renderHealthStatus(data) {
     }
 
     // 1. Zustand sichern (geöffnete Gruppen und Scrollposition)
-    const openSeverities = [];
     const openTypes = [];
     const hadDetails = issuesEl.querySelector("details") !== null;
     if (hadDetails) {
         issuesEl.querySelectorAll("details").forEach(d => {
             if (d.open) {
-                const sev = d.getAttribute("data-sev");
-                if (sev) openSeverities.push(sev);
                 const typ = d.getAttribute("data-type-id");
                 if (typ) openTypes.push(typ);
                 const showPath = d.getAttribute("data-show-path");
@@ -13280,18 +13256,32 @@ function renderHealthStatus(data) {
         }
     }
 
-    // Summary-Badges
-    const summary = data.summary || { critical: 0, warning: 0, info: 0 };
-    const hasResult = (data.issues && data.finished_at) || data.status === "done";
+    // Summary-Badges (Gesamtzahl + 4 Gruppen: Metadaten, Artwork, Dateien, Struktur)
+    const hasResult = (allIssues && data.finished_at) || data.status === "done";
     if (hasResult) {
+        const groupCounts = { metadata: 0, artwork: 0, files: 0, structure: 0 };
+        allIssues.forEach(it => {
+            const grp = getHealthIssueGroup(it);
+            if (groupCounts[grp] !== undefined) {
+                groupCounts[grp]++;
+            }
+        });
+        const totalCount = allIssues.length;
+        const groupsDef = [
+            { key: "metadata", label: "Metadaten" },
+            { key: "artwork", label: "Artwork" },
+            { key: "files", label: "Dateien" },
+            { key: "structure", label: "Struktur" }
+        ];
+
+        const chipsHtml = [
+            `<span style="font-size:0.85em; padding:4px 10px; border-radius:12px; background:rgba(255,255,255,0.06); color:var(--text-main); border:1px solid var(--border-light); font-weight:500;">Gesamt: ${totalCount}</span>`,
+            ...groupsDef.map(g => `<span style="font-size:0.85em; padding:4px 10px; border-radius:12px; background:rgba(255,255,255,0.035); color:var(--text-muted); border:1px solid var(--border-light);">${g.label}: ${groupCounts[g.key] || 0}</span>`)
+        ].join("");
+
         summaryEl.innerHTML = `<div style="font-size:0.9em; font-weight:600; color:var(--text-muted); margin-bottom: 8px; width: 100%; text-align: center;">Ergebnis des Scans:</div>`
             + `<div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap; width:100%;">`
-            + ["critical", "warning", "info"].map(sev => {
-                const m = HEALTH_SEVERITY[sev];
-                return `<span style="font-size:0.85em; padding:4px 10px; border-radius:12px; background:${m.color}22; color:${m.color}; border:1px solid ${m.color}55;">
-                            ${m.icon} ${summary[sev] || 0} ${m.label}
-                        </span>`;
-            }).join("")
+            + chipsHtml
             + `</div>`;
     } else {
         summaryEl.innerHTML = "";
@@ -13302,71 +13292,14 @@ function renderHealthStatus(data) {
         groupControls.style.display = hasResult && data.issues && data.issues.length > 0 ? "flex" : "none";
     }
 
-    // Issues gruppiert nach Schwere oder Fehlertyp
+    // Issues gruppiert nach Fehlertyp oder Medien
     if ((data.issues && data.issues.length > 0) || structureIssues.length > 0) {
         let html = "";
         let totalRendered = 0;
         const DOM_LIMIT = 500;
         let limitReached = false;
 
-        if (window.healthGroupMode === "severity") {
-            const order = ["critical", "warning", "info"];
-            const grouped = { critical: [], warning: [], info: [] };
-            data.issues.forEach(it => { (grouped[it.severity] || grouped.info).push(it); });
-
-            order.forEach(sev => {
-                const list = grouped[sev];
-                if (!list.length) return;
-                const m = HEALTH_SEVERITY[sev];
-                const isOpen = openSeverities.includes(sev) || (sev === "critical" && openSeverities.length === 0);
-                html += `<details data-sev="${sev}" ${isOpen ? "open" : ""} style="border:1px solid var(--border-light); border-radius:8px; padding:8px 12px; margin-bottom:8px;">
-                            <summary style="cursor:pointer; color:${m.color}; font-weight:500;">${m.icon} ${m.label} (${list.length})</summary>
-                            <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">`;
-
-                for (let i = 0; i < list.length; i++) {
-                    if (totalRendered >= DOM_LIMIT) {
-                        if (!limitReached) {
-                            html += `<div style="padding: 10px; text-align: center; color: var(--text-muted); font-style: italic; display:flex; align-items:center; justify-content:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-alert-circle" style="height:12px; width:12px;"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>Anzeige-Limit erreicht. Es werden nur die ersten ${DOM_LIMIT} Befunde dargestellt.</div>`;
-                            limitReached = true;
-                        }
-                        break;
-                    }
-                    const it = list[i];
-                    totalRendered++;
-                    let fixBtns = "";
-                    let scopeData = "";
-                    if (it.scope_kind) scopeData += ` data-scope-kind="${escapeHTML(it.scope_kind)}"`;
-                    if (it.series_path) scopeData += ` data-series-path="${escapeHTML(it.series_path)}"`;
-                    if (it.season_path) scopeData += ` data-season-path="${escapeHTML(it.season_path)}"`;
-                    const nfoEditMode = it.media_kind === "series" ? "series" : (it.media_kind === "episode" ? "episode" : "full");
-                    const episodeFileData = it.episode_file ? ` data-episode-file="${escapeHTML(it.episode_file)}"` : "";
-
-                    if (it.type === "nested_duplicate") {
-                        fixBtns = `<button class="btn btn-secondary btn-sm health-structure-preview" data-path="${escapeHTML(it.path)}" title="Vorschau anzeigen" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search" style="height:12px; width:12px;"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>Vorschau</button>
-                                   <button class="btn btn-primary btn-sm health-structure-apply" data-path="${escapeHTML(it.path)}" title="Unterordner auflösen" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wrench" style="height:12px; width:12px;"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Auflösen</button>`;
-                    } else if (it.type === "name_mismatch" || it.type === "bad_folder_name") {
-                        fixBtns = `<button class="btn btn-secondary btn-sm health-fix-rename" data-path="${escapeHTML(it.path)}" data-type="${escapeHTML(it.type)}" title="Umbenennen" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit-3" style="height:12px; width:12px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Umbenennen</button>`;
-                    } else if (it.type === "missing_age_rating" || it.type === "invalid_age_rating") {
-                        fixBtns = `<button class="btn btn-accent btn-sm health-fix-fsk" data-path="${escapeHTML(it.path)}" ${scopeData} title="Metadaten bearbeiten" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings" style="height:12px; width:12px;"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Metadaten bearbeiten</button>`;
-                    } else if (it.type === "missing_poster" || it.type === "missing_backdrop" || it.type === "missing_logo" || it.type === "missing_banner" || it.type === "missing_season_poster") {
-                        fixBtns = `<button class="btn btn-secondary btn-sm health-artwork-search" data-path="${escapeHTML(it.path)}" data-type="${escapeHTML(it.type)}" title="Bild online suchen" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image" style="height:12px; width:12px;"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Bild suchen</button>`;
-                    } else if (it.type === "missing_nfo" || it.type === "incomplete_nfo") {
-                        fixBtns = `<button class="btn btn-accent btn-sm health-nfo-agent" data-path="${escapeHTML(it.agent_path || it.path)}" data-edit-mode="${nfoEditMode}"${episodeFileData} title="Metadaten bearbeiten" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" style="height:12px; width:12px;"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Metadaten bearbeiten</button>`;
-                    }
-                    html += `<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:0.9em; padding:8px 0; border-top:1px solid rgba(255,255,255,0.04);">
-                                <div style="flex:1; min-width:0; color:var(--text-main); font-weight:500;">
-                                    <span style="min-width:0; overflow-wrap:anywhere; word-break:break-word;">${escapeHTML(it.category)} · ${escapeHTML(it.message)}</span>
-                                </div>
-                                <span style="display:flex; gap:6px; flex-wrap:wrap; white-space:nowrap; flex-shrink:0;">
-                                    ${fixBtns}
-                                    <button class="btn btn-secondary btn-sm health-open-folder" data-path="${escapeHTML(it.path)}" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" style="height:12px; width:12px;"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>Öffnen</button>
-                                    <button class="btn btn-secondary btn-sm finding-ignore" data-key="${escapeHTML(it.key || "")}" title="Diesen Befund dauerhaft ausblenden" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-ban" style="height:12px; width:12px;"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>Ignorieren</button>
-                                </span>
-                             </div>`;
-                }
-                html += `</div></details>`;
-            });
-        } else if (window.healthGroupMode === "type") {
+        if (window.healthGroupMode === "type") {
             // Gruppierung nach Fehlertyp
             const grouped = {};
             data.issues.forEach(it => {
@@ -13387,18 +13320,6 @@ function renderHealthStatus(data) {
                 if (!list.length) return;
                 const label = HEALTH_TYPE_LABELS[typeId] || typeId;
                 const recommendedAction = HEALTH_RECOMMENDED_ACTIONS[typeId] || "";
-
-                // Zähle Schweregrade innerhalb dieser Gruppe
-                const groupSummary = { critical: 0, warning: 0, info: 0 };
-                list.forEach(it => {
-                    groupSummary[it.severity] = (groupSummary[it.severity] || 0) + 1;
-                });
-
-                const summaryParts = [];
-                if (groupSummary.critical > 0) summaryParts.push(`<span style="color:#ef4444; font-weight:500; display:inline-flex; align-items:center; gap:2px;">${HEALTH_SEVERITY.critical.icon}${groupSummary.critical}</span>`);
-                if (groupSummary.warning > 0) summaryParts.push(`<span style="color:#f59e0b; font-weight:500; display:inline-flex; align-items:center; gap:2px;">${HEALTH_SEVERITY.warning.icon}${groupSummary.warning}</span>`);
-                if (groupSummary.info > 0) summaryParts.push(`<span style="color:#3b82f6; font-weight:500; display:inline-flex; align-items:center; gap:2px;">${HEALTH_SEVERITY.info.icon}${groupSummary.info}</span>`);
-                const summaryHtml = summaryParts.join(", ");
 
                 // Visuelle Vorbereitung für Batch-Aktionen
                 let batchBtnHtml = "";
@@ -13445,7 +13366,6 @@ function renderHealthStatus(data) {
                                 <div style="display:flex; align-items:center; gap:8px; flex:1;">
                                     <input type="checkbox" class="health-group-select-all" data-type-id="${typeId}" style="margin:0; width:14px; height:14px; cursor:pointer;" onclick="event.stopPropagation();">
                                     <span style="color:var(--text-main);">${escapeHTML(label)} (${list.length})</span>
-                                    <span style="font-size:0.8em; margin-left:8px;">(${summaryHtml})</span>
                                 </div>
                                 <div style="display:flex; align-items:center; gap:10px;" onclick="event.stopPropagation();">
                                     ${batchBtnHtml}
@@ -13494,11 +13414,9 @@ function renderHealthStatus(data) {
                         fixBtns = `<button class="btn btn-accent btn-sm health-nfo-agent" data-path="${escapeHTML(it.agent_path || it.path)}" data-edit-mode="${nfoEditMode}"${episodeFileData} title="Metadaten bearbeiten" style="display:inline-flex; align-items:center; gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" style="height:12px; width:12px;"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Metadaten bearbeiten</button>`;
                     }
 
-                    const m = HEALTH_SEVERITY[it.severity];
                     html += `<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:0.9em; padding:8px 0; border-top:1px solid rgba(255,255,255,0.04);">
                                 <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0; color:var(--text-main); font-weight:500;">
                                     <input type="checkbox" class="health-item-select" data-type-id="${typeId}" data-path="${escapeHTML(it.path)}" ${scopeData} style="margin:0; width:14px; height:14px; cursor:pointer; flex-shrink:0;">
-                                    <span style="color:${m.color}; margin-right:4px; display:inline-flex; align-items:center; flex-shrink:0;">${m.icon}</span>
                                     <span style="min-width:0; overflow-wrap:anywhere; word-break:break-word;">${escapeHTML(it.category)} · ${escapeHTML(it.message)}</span>
                                 </div>
                                 <span style="display:flex; gap:6px; flex-wrap:wrap; white-space:nowrap; flex-shrink:0;">
@@ -13523,10 +13441,7 @@ function renderHealthStatus(data) {
         // 2. Zustand wiederherstellen
         if (hadDetails) {
             issuesEl.querySelectorAll("details").forEach(d => {
-                if (window.healthGroupMode === "severity") {
-                    const sev = d.getAttribute("data-sev");
-                    d.open = openSeverities.includes(sev) || (sev === "critical" && openSeverities.length === 0);
-                } else if (window.healthGroupMode === "type") {
+                if (window.healthGroupMode === "type") {
                     const typ = d.getAttribute("data-type-id");
                     d.open = openTypes.includes(typ);
                 } else if (window.healthGroupMode === "media") {
