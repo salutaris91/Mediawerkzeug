@@ -2,6 +2,15 @@
 
 Hier befindet sich die kumulative Historie des projektfortschritts, ausgelagert aus `STAND.md`.
 
+## Stand am 02.09.2026 (Deployment-Notizen live verifiziert, Item 53 Schritt 1 gemergt)
+
+- **Deployment-Notizen strukturiert und live verifiziert** (PR [#131](https://github.com/salutaris91/Medienwerkzeug/pull/131)/[#132](https://github.com/salutaris91/Medienwerkzeug/pull/132)/[#133](https://github.com/salutaris91/Medienwerkzeug/pull/133), alle gemergt): Auf Alex' Anstoß ("wie bekomme ich Updates, worauf muss ich achten") bekam `CLAUDE.md`s "Deployment-Notizen"-Abschnitt feste Unterpunkte (Update-Mechanismus, -Befehle, Verifikation, Rollback) — Vorlage dafür zusätzlich im Kit selbst (`CLAUDE.project.template.md`) generalisiert. Danach real gegen das NAS getestet (`ssh nas-ts`): Update `v90`→`v91` ausgeführt, alle drei Verifikationswege bestätigt (`/api/healthz`, App.js-Versionsabgleich, `docker inspect`-Image-Alter) — ein `docker inspect`-Befehl brauchte einen Fix (fehlendes Arbeitsverzeichnis).
+- **Roadmap-Item 53, Schritt 1 umgesetzt und gemergt** (PR [#134](https://github.com/salutaris91/Medienwerkzeug/pull/134)): Health-Check-Anzeigemodus "Schweregrad" (kritisch/Warnung/Hinweis) komplett entfernt — Button, Umschalt-Logik, `HEALTH_SEVERITY`-Konstante, Gruppierung. Zähler-Chips zeigen jetzt Gesamtzahl + vier Gruppenzähler (Metadaten/Artwork/Dateien/Struktur). Backend/API/Cache (`severity`-Feld) bewusst unangetastet — nur die Frontend-Anzeige ignoriert es jetzt (Schritt 2, Backend-Bereinigung, bleibt offen). `app.js` dabei netto ~90 Zeilen kleiner.
+- **Erster echter End-to-End-Durchlauf des neuen, gebündelten Kit-Werkzeugs** (`gate_run_and_review_task`, Kit-Repo-PR #85): Ausführung + Anwendung + Rückkanal-Abnahme in einem Aufruf getestet (Wegwerf-Repo), danach die eigentliche Item-53-Umsetzung weiterhin über die Einzelschritte gefahren, da das Bündel-Werkzeug zu dem Zeitpunkt noch nicht gemergt war.
+- **Rückkanal-Abnahme (scout + advocatus) durchgeführt** — VERDICT: APPROVE, keine Blocker. `scout` empfiehlt als Nächstes: erst Item 56 (SCAN_VERSION-Regressionstest) als Sicherheitsnetz, dann Item 53 Schritt 2 (Backend-Bereinigung) mit `SCAN_VERSION`-Bump — beide zusammen in einem Branch. Session-Artefakte unter `docs/sessions/2026-09-01-rueckblick-item53-schritt1/`.
+- **Prozess-Entscheidung (Alex, 02.09.2026):** STAND.md-Nachführung und Session-Artefakt-Archivierung sollen künftig standardmäßig passieren, ohne jedes Mal explizit nachzufragen.
+- **Zwei technische Bugfixes unterwegs entdeckt und im Kit-Repo behoben** (nicht in diesem Repo): eine Fehlalarm-Erkennung im `project_dir`-Pfadschutz (Task-Text mit Schrägstrichen wurde fälschlich als Pfad erkannt) und ein agy-Timeout bei größeren Aufgaben (300s reichten für den Severity-Umbau nicht, auf 900s erhöht).
+
 ## Stand am 01.09.2026 (K1-Cache-Busting-Fix via Kreativteam-Orchestrierung, PR #130 gemergt)
 
 - **Kit-Migration abgeschlossen:** `chore/adopt-ai-coding-kit` (PR #128) und die Kreativteam-Session-Artefakte (PR #129) sind gemergt. `main` trägt jetzt vollständig das AI-Coding-Starter-Kit inkl. Gate A2/A3.
