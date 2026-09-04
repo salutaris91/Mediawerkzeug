@@ -62,6 +62,7 @@ die aktive After-Release-Roadmap übernommen.
 | 53 | Health-Check: Schweregrade aus der Oberfläche entfernen | geplant | klein–mittel |
 | 54 | Metadatendienste: Alle Abrufe auf den Retry-Helfer umstellen | geplant | mittel |
 | 55 | NFO-Agent: Multi-Provider-Metadatenvergleich mit Feld-Badges | geplant | mittel–groß |
+| 58 | Auth-Härtung: offener Default-Endpoint + fehlende Server-Whitelist | geplant | mittel |
 
 ---
 
@@ -1670,3 +1671,21 @@ Aktuell muss die Cache-Busting-Versionsnummer bei Frontend-Änderungen an mehrer
 
 **Lösungsidee:**
 Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das die Cache-Busting-Versionsnummer für `app.js` (inkl. aller eigenen Modul-Importe), `style.css` und `utilities.css` automatisiert und konsistent an einer zentralen Stelle hochzählt, statt manuell mehrere Dateien einzeln bearbeiten zu müssen.
+
+---
+
+## 58. Auth-Härtung: offener Default-Endpoint + fehlende Server-Whitelist
+
+**Einordnung / Priorität:** Sicherheit — als Schritt 0 vor Item #24 (API-Key-Maskierung UX) verbindlich angelegt, siehe `docs/sessions/2026-09-03-api-key-maskierung-ux/briefing.md`.
+
+**Kontext / Herkunft:** Fund der `advocatus`-Rolle während der Kreativteam-Session zu Item #24 (03.09.2026), real gegen den Code verifiziert (nicht nur behauptet).
+
+**Problem:**
+- **A4 — Offener Default-Endpoint:** Ohne gesetztes Passwort sind `/api/settings` und `/api/keys` im gesamten LAN unauthentifiziert erreichbar, ohne CSRF-Schutz oder Rate-Limit, bei Bind an `0.0.0.0`. Wer Docker ohne Reverse-Proxy betreibt (der Hauptkanal, siehe Item #18), setzt damit Credential-Schreibzugriff frei zugänglich ins Netz.
+- **B8 — Mass Assignment:** `gui/api/system_api.py:111-115` übernimmt beliebige, vom Client gesendete Settings-Keys ohne serverseitige Whitelist — ein Client kann Felder setzen, die die UI gar nicht vorsieht.
+
+**Lösungsidee:**
+- Auth-Middleware so härten, dass sicherheitsrelevante Endpunkte (`/api/settings`, `/api/keys`) auch im No-Passwort-Modus zumindest CSRF-geschützt und rate-limitiert sind, oder der No-Passwort-Modus zeigt beim Start/in der UI eine unübersehbare Warnung.
+- `system_api.py`: Settings-Updates auf eine explizite Feld-Whitelist beschränken statt beliebige `params`-Keys durchzureichen.
+
+**Aufwand (grob):** Mittel — Middleware-Anpassung + Tests für beide Fälle (kein Passwort gesetzt / Mass-Assignment-Versuch).
