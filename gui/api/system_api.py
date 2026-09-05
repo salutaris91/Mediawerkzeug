@@ -90,34 +90,42 @@ def handle_api_settings():
         except Exception:
             params = {}
 
+        # Validate key fields: reject masked values and whitespace-only values
+        key_fields = ["tmdb_api_key", "tvdb_api_key", "telegram_token", "telegram_chat_id", "whatsapp_apikey", "whatsapp_phone"]
+        field_feedback = {}
+        for k in key_fields:
+            if k in params:
+                val = params[k]
+                if isinstance(val, str):
+                    if val != "" and val.strip() == "":
+                        return jsonify({"error": f"Ungültiger Wert für '{k}': Enthält nur Leerzeichen.", "field": k}), 400
+                    if is_masked(val) or "****" in val:
+                        return jsonify({"error": f"Maskierter Wert für '{k}' erkannt. Bitte das Feld vollständig leeren und den Key neu eingeben.", "field": k}), 400
+                    params[k] = val.strip()
+                field_feedback[k] = {"status": "saved"}
+
         # Extract env variables from params
         env_updates = {}
         if "tmdb_api_key" in params:
             val = params.pop("tmdb_api_key")
-            if not is_masked(val):
-                env_updates["TMDB_API_KEY"] = val
+            env_updates["TMDB_API_KEY"] = val
         if "tvdb_api_key" in params:
             val = params.pop("tvdb_api_key")
-            if not is_masked(val):
-                env_updates["TVDB_API_KEY"] = val
+            env_updates["TVDB_API_KEY"] = val
 
         # Save env variables if changed
         if "TMDB_API_KEY" in env_updates or "TVDB_API_KEY" in env_updates:
-            # Only pass keys that were unmasked to save_env_keys
             save_env_keys(env_updates)
             mw_metadata.reload_metadata_keys()
 
-        # Protect masked regular settings
         def mutate(data):
             for k, v in params.items():
-                if k in ["telegram_token", "telegram_chat_id", "whatsapp_apikey", "whatsapp_phone"] and is_masked(v):
-                    continue # Preserve existing value
                 data[k] = v
 
         if update_settings(mutate):
-            return jsonify({"status": "success"})
+            return jsonify({"status": "success", "fields": field_feedback})
         else:
-            return jsonify({"error": "Failed to save settings"})
+            return jsonify({"error": "Failed to save settings"}), 500
     else:
         settings = load_settings()
 

@@ -251,12 +251,20 @@ def handle_onboarding_keys():
             params = {}
 
         updates = {}
-        for k in ["TMDB_API_KEY", "TVDB_API_KEY"]:
+        field_feedback = {}
+        for k in ["TMDB_API_KEY", "TVDB_API_KEY", "tmdb_api_key", "tvdb_api_key"]:
             if k in params:
                 val = params[k]
-                from gui.core.persistence import is_masked
-                if not is_masked(val):
-                    updates[k] = val
+                if isinstance(val, str):
+                    if val != "" and val.strip() == "":
+                        return jsonify({"error": f"Ungültiger Wert für '{k}': Enthält nur Leerzeichen.", "field": k}), 400
+                    from gui.core.persistence import is_masked
+                    if is_masked(val) or "****" in val:
+                        return jsonify({"error": f"Maskierter Wert für '{k}' erkannt. Bitte das Feld vollständig leeren und den Key neu eingeben.", "field": k}), 400
+                    val = val.strip()
+                env_key = "TMDB_API_KEY" if "tmdb" in k.lower() else "TVDB_API_KEY"
+                updates[env_key] = val
+                field_feedback[k] = {"status": "saved"}
 
         if updates:
             save_env_keys(updates)
@@ -266,7 +274,7 @@ def handle_onboarding_keys():
                 reload_metadata_keys()
             except Exception as e:
                 print(f"Error reloading metadata keys: {e}", file=sys.stderr)
-        return jsonify({"status": "success"})
+        return jsonify({"status": "success", "fields": field_feedback})
     else:
         from gui.core.persistence import load_env_keys, mask_credential
         keys = load_env_keys()
