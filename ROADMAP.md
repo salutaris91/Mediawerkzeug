@@ -30,7 +30,7 @@ die aktive After-Release-Roadmap übernommen.
 | 21 | Desktop-App Packaging (pywebview/PyInstaller) | geplant | groß |
 | 22 | Update-Hinweise und Release Notes | geplant | klein–mittel |
 | 23 | Lizenz- und Drittanbieterhinweise | geplant | klein |
-| 24 | API-Key Maskierung UX (Fokus/Editierung-Verhalten) | geplant | klein |
+| 24 | API-Key Maskierung UX (Fokus/Editierung-Verhalten) | erledigt | klein |
 | 25 | TV-Pfad: Angleichung der Untertitel-Erkennung | erledigt | klein |
 | 26 | FAQ/Dokumentation: Docker-Importquellen und Volume-Mapping beschreiben | geplant | klein |
 | 27 | Web-Folder-Picker: Dynamische Titel je nach ausgewählter Kategorie | erledigt | klein |
@@ -740,9 +740,11 @@ Klein: Recherche, Dokumentation und Pflege bei neuen gebündelten Abhängigkeite
 
 ---
 
-## 24. API-Key Maskierung UX (Fokus/Editierung-Verhalten)
+## 24. API-Key Maskierung UX (Fokus/Editierung-Verhalten) — erledigt (06.09.2026)
 
 Wenn ein maskierter API-Key (z. B. `****1234`) im Input-Feld vom Benutzer teil-editiert wird (ohne ihn ganz zu löschen oder komplett zu ersetzen), ignoriert das Backend den Wert stillschweigend aufgrund der `is_masked()`-Prüfung. Dies kann zu Verwirrung führen, da der Benutzer denkt, er hätte den Key geändert, dieser aber unverändert bleibt.
+
+**Umgesetzt** über den Gate-A2 Worker/Reviewer-Zyklus, Rückkanal-geprüft (scout/advocatus/produktberater). Zwei Nachbesserungsrunden (K1: Theme-Autosave-Regression, W1: Blur-Lücke) sowie eine Badge-Korrektur, alle durch die Kreativteam-Rollen verifiziert. Details und Rohoutputs unter `docs/sessions/2026-09-03-api-key-maskierung-ux/`, `docs/sessions/2026-09-05-abnahme-apikey-maskierung/`, `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`. Bewusst zurückgestellt: Items #59 (expliziter Löschen-Button) und #60 (Theme-Fehler sichtbar). Branch: `a2/20260906T055637Z` (noch nicht gemergt).
 
 ### Ziel
 Eine sauberere UX beim Editieren maskierter Werte.
