@@ -197,10 +197,11 @@ export function setupMaskedInput(inputEl) {
     });
 
     inputEl.addEventListener("blur", () => {
-        // Blur-Restore: If user focused without editing (or left pristine), restore original value
-        if (inputEl.dataset.editing !== "true" || inputEl.dataset.masked === "true") {
+        // Blur-Restore: If user left empty after clear-on-edit without real new value, or focused without editing, restore original value
+        if (inputEl.dataset.editing !== "true" || inputEl.dataset.masked === "true" || inputEl.value === "" || inputEl.value.trim() === "") {
             inputEl.value = inputEl.dataset.original || "";
             inputEl.dataset.editing = "false";
+            inputEl.dataset.masked = isMaskedValue(inputEl.dataset.original) ? "true" : "false";
         } else if (inputEl.value === inputEl.dataset.original) {
             inputEl.dataset.editing = "false";
             inputEl.dataset.masked = isMaskedValue(inputEl.dataset.original) ? "true" : "false";
@@ -251,6 +252,15 @@ export function validateMaskedInput(inputEl) {
         if (inputEl.setAttribute) inputEl.setAttribute("aria-invalid", "true");
         updateMaskedInputState(inputEl);
         return { valid: false, changed: true, error: errMsg, fieldId };
+    }
+
+    // Empty after Clear-on-Edit without new value: treat as unchanged (preserve original)
+    if (val.trim() === "") {
+        if (errorEl) errorEl.textContent = "";
+        if (inputEl.classList) inputEl.classList.remove("is-invalid");
+        if (inputEl.setAttribute) inputEl.setAttribute("aria-invalid", "false");
+        updateMaskedInputState(inputEl);
+        return { valid: true, changed: false, value: orig, fieldId };
     }
 
     // Valid change

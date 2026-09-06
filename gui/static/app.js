@@ -486,6 +486,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (currentSettings) {
                 currentSettings.app_theme = newTheme;
                 try {
+                    const keyFields = [
+                        "tmdb_api_key",
+                        "tvdb_api_key",
+                        "telegram_token",
+                        "telegram_chat_id",
+                        "whatsapp_apikey",
+                        "whatsapp_phone"
+                    ];
                     const payload = {
                         ...currentSettings,
                         app_theme: newTheme,
@@ -493,11 +501,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         sync_categories: (currentSettings.sync_categories || []).filter(c => c.id.trim() !== "" && c.name.trim() !== ""),
                         local_download_folders: (currentSettings.local_download_folders || []).filter(f => f.path && f.path.trim() !== "")
                     };
-                    await fetch("/api/settings", {
+                    for (const k of keyFields) {
+                        delete payload[k];
+                    }
+                    const response = await fetch("/api/settings", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload)
                     });
+                    if (!response.ok) {
+                        console.error("Fehler beim automatischen Speichern des Themes:", response.status, response.statusText);
+                    }
                 } catch (e) {
                     console.error("Fehler beim automatischen Speichern des Themes:", e);
                 }

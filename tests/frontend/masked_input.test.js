@@ -287,7 +287,7 @@ test("AC6: Decoupled Key Presence indicator works for short keys (****) and empt
     }
 });
 
-test("AC7: Whitespace-only input is rejected and marked as invalid", () => {
+test("AC12: Whitespace-only input is rejected and marked as invalid", () => {
     const dom = createMockDOM(["settings-telegram-token"]);
     try {
         const input = dom.elements["settings-telegram-token"];
@@ -298,6 +298,113 @@ test("AC7: Whitespace-only input is rejected and marked as invalid", () => {
         assert.strictEqual(res.valid, false);
         assert.strictEqual(input.classList.contains("is-invalid"), true);
         assert.ok(res.error && res.error.includes("Leerzeichen"));
+    } finally {
+        dom.restore();
+    }
+});
+
+test("W1: Blur-Restore restores masked value when user triggers Clear-on-Edit but blurs with empty input", () => {
+    const dom = createMockDOM(["settings-telegram-token"]);
+    try {
+        const input = dom.elements["settings-telegram-token"];
+        const badge = dom.elements["settings-telegram-token-badge"];
+        setupMaskedInput(input);
+        setMaskedInputValue(input, "****5678", { configured: "Hinterlegt" });
+
+        input.focus();
+        // Clear-on-Edit triggered by backspace or keypress
+        input.dispatch("keydown", { key: "Backspace" });
+        assert.strictEqual(input.value, "");
+        assert.strictEqual(input.dataset.editing, "true");
+
+        // User blurs without entering any new key
+        input.blur();
+
+        // Must restore original masked value and editing state
+        assert.strictEqual(input.value, "****5678");
+        assert.strictEqual(input.dataset.editing, "false");
+        assert.strictEqual(input.dataset.masked, "true");
+        assert.strictEqual(badge.textContent, "✓");
+        assert.strictEqual(badge.className, "masked-key-badge badge-configured");
+
+        // Validation must not mark as changed
+        const res = validateMaskedInput(input);
+        assert.strictEqual(res.valid, true);
+        assert.strictEqual(res.changed, false);
+    } finally {
+        dom.restore();
+    }
+});
+
+test("W1: Blur-Restore restores masked value when user enters whitespace and blurs", () => {
+    const dom = createMockDOM(["settings-telegram-token"]);
+    try {
+        const input = dom.elements["settings-telegram-token"];
+        setupMaskedInput(input);
+        setMaskedInputValue(input, "****5678", { configured: "Hinterlegt" });
+
+        input.focus();
+        input.dispatch("keydown", { key: " " });
+        input.value = "   ";
+
+        // User blurs
+        input.blur();
+
+        assert.strictEqual(input.value, "****5678");
+        assert.strictEqual(input.dataset.editing, "false");
+        assert.strictEqual(input.dataset.masked, "true");
+    } finally {
+        dom.restore();
+    }
+});
+
+test("W1: Validation treats field cleared via Clear-on-Edit without new value as unchanged (changed=false)", () => {
+    const dom = createMockDOM(["settings-telegram-token"]);
+    try {
+        const input = dom.elements["settings-telegram-token"];
+        setupMaskedInput(input);
+        setMaskedInputValue(input, "****5678", { configured: "Hinterlegt" });
+
+        input.focus();
+        input.dispatch("keydown", { key: "Backspace" });
+        assert.strictEqual(input.value, "");
+
+        // Direct validation before blur
+        const res = validateMaskedInput(input);
+        assert.strictEqual(res.valid, true);
+        assert.strictEqual(res.changed, false);
+        assert.strictEqual(res.value, "****5678");
+    } finally {
+        dom.restore();
+    }
+});
+
+test("W1: User clears field, types a new valid key, blurs -> new key is preserved and validation reports changed=true", () => {
+    const dom = createMockDOM(["settings-telegram-token"]);
+    try {
+        const input = dom.elements["settings-telegram-token"];
+        const badge = dom.elements["settings-telegram-token-badge"];
+        setupMaskedInput(input);
+        setMaskedInputValue(input, "****5678", { configured: "Hinterlegt" });
+
+        input.focus();
+        input.dispatch("keydown", { key: "x" });
+        input.value = "new_real_secret_token";
+        input.dispatch("input");
+
+        // User blurs
+        input.blur();
+
+        // Real new value is kept
+        assert.strictEqual(input.value, "new_real_secret_token");
+        assert.strictEqual(input.dataset.editing, "true");
+        assert.strictEqual(badge.textContent, "✓");
+        assert.strictEqual(badge.className, "masked-key-badge badge-valid");
+
+        const res = validateMaskedInput(input);
+        assert.strictEqual(res.valid, true);
+        assert.strictEqual(res.changed, true);
+        assert.strictEqual(res.value, "new_real_secret_token");
     } finally {
         dom.restore();
     }
