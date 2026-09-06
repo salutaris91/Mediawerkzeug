@@ -63,6 +63,8 @@ die aktive After-Release-Roadmap übernommen.
 | 54 | Metadatendienste: Alle Abrufe auf den Retry-Helfer umstellen | geplant | mittel |
 | 55 | NFO-Agent: Multi-Provider-Metadatenvergleich mit Feld-Badges | geplant | mittel–groß |
 | 58 | Auth-Härtung: offener Default-Endpoint + fehlende Server-Whitelist | geplant | mittel |
+| 59 | API-Key löschen: expliziter UI-Weg (statt nur Ersetzen) | geplant | klein–mittel |
+| 60 | Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole | geplant | klein |
 
 ---
 
@@ -1689,3 +1691,31 @@ Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das d
 - `system_api.py`: Settings-Updates auf eine explizite Feld-Whitelist beschränken statt beliebige `params`-Keys durchzureichen.
 
 **Aufwand (grob):** Mittel — Middleware-Anpassung + Tests für beide Fälle (kein Passwort gesetzt / Mass-Assignment-Versuch).
+
+---
+
+## 59. API-Key löschen: expliziter UI-Weg (statt nur Ersetzen)
+
+**Einordnung / Priorität:** Folge-Item aus der Rückkanal-Konsultation (06.09.2026) zum W1-Fix von Item #24 (API-Key-Maskierung UX), siehe `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`.
+
+**Kontext / Herkunft:** Der W1-Fix (Blur-Restore/Validierung gegen versehentliches Löschen durch einen einzelnen Tastendruck) hat als Nebenwirkung die zuvor im Briefing dokumentierte Semantik „leeres Feld speichern = Key löschen" vollständig deaktiviert. Alle drei Kreativteam-Rollen (advocatus, produktberater, scout) haben das unabhängig voneinander bestätigt. Bewusstes Löschen eines Keys ist über die Web-UI aktuell nicht mehr möglich, nur noch durch direktes Editieren der `.env`-Datei.
+
+**Entscheidung (Alex, 2026-09-06):** Für den Abschluss von Item #24 wird die Limitation dokumentiert und der dadurch tot gewordene Badge-Zweig „Wird entfernt" entfernt (Option A) — bewusst nicht in Item #24 selbst gelöst, um den Branch nicht weiter aufzublähen. Dieses Item ist der separate Folge-Auftrag für die eigentliche Lösung (Option B).
+
+**Lösungsidee:**
+- Expliziter „×"-Löschen-Button pro Key-Feld mit kurzer Bestätigung, statt die Lösch-Absicht implizit aus einem leeren gespeicherten Feld abzuleiten (das genau der Mechanismus war, den W1 aus gutem Grund abgeschaltet hat).
+
+**Aufwand (grob):** Klein–mittel.
+
+---
+
+## 60. Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole
+
+**Einordnung / Priorität:** Folge-Item aus der Rückkanal-Konsultation (06.09.2026) zum K1-Fix von Item #24 (API-Key-Maskierung UX), siehe `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`.
+
+**Kontext / Herkunft:** Nach dem K1-Fix (Theme-Autosave schickt keine maskierten Key-Felder mehr mit) meldet ein fehlschlagender Theme-Save weiterhin nur per `console.error` (`gui/static/app.js:512-514`), nicht sichtbar in der UI — bewusst nicht mit in den K1/W1-Fix genommen, um Scope Creep auf Item #24 zu vermeiden (Theme-Save schlägt auf `localhost` praktisch nie fehl, kein Datenverlust- oder Sicherheitsrisiko).
+
+**Lösungsidee:**
+- Bei fehlschlagendem Theme-Autosave eine sichtbare, kurze UI-Meldung (Toast/Inline-Hinweis) statt nur der Konsolen-Ausgabe.
+
+**Aufwand (grob):** Klein.
