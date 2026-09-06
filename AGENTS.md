@@ -263,6 +263,13 @@ Sobald ein Feature oder ein zusammenhängender Arbeitsschritt abgeschlossen ist,
 4. **Projektspezifische Schritte:** siehe Projektblock in `CLAUDE.md` / `AGENTS.md`
    (z. B. Wissensgraph aktualisieren, Build-Artefakte neu erzeugen).
 
+Diese vier Pflicht-Updates gelten als generell freigegeben (Alex, 2026-09-02):
+Solange sie sich auf STAND.md, VERLAUF.md, Roadmap-Status oder das ungekürzte
+Archivieren von Session-Rohoutputs (`docs/sessions/*/*.md`) beschränken, lösen
+sie keinen eigenen Freigabepunkt aus und müssen nicht einzeln rückgefragt
+werden. Alles andere (Commit/PR, Code-/Konfigurationsänderungen) bleibt
+regulärer Freigabepunkt gemäß `04-bestaetigungspflicht.md`.
+
 ## Capability-Check
 
 Zu Beginn eines neuen Projekts oder einer neuen groesseren Arbeitsphase wird
@@ -349,6 +356,11 @@ Nach jeder Coding-Aufgabe ausgeben:
 - **Was wurde geändert:** (eine Zeile pro Datei)
 - **Nicht angefasste Dateien:** (explizit nennen, falls relevant)
 - **Belege:** (ausgeführte Befehle + tatsächliche Ausgabe, v. a. Tests)
+- **Update-Schritt für dich:** (falls das Projekt eine gefüllte
+  Deployment-Notizen-Sektion in seiner `CLAUDE.md` hat — die konkreten
+  Update-Befehle hier wiederholen, z. B. `docker compose pull && docker
+  compose up -d`, nicht nur auf die Doku verweisen. Bei Projekten ohne
+  laufende, deploybare Instanz weglassen.)
 - **Offene Punkte:** (falls vorhanden)
 
 ### Checkliste vor jedem "Fertig"
@@ -365,6 +377,7 @@ Nach jeder Coding-Aufgabe ausgeben:
 <!-- WORKER-SAFE:END -->
 - [ ] STAND.md nachgeführt (nur aktueller Stand)
 - [ ] Zurückgestellte Sicherheits-/Architekturerwägungen in ROADMAP.md eingetragen
+- [ ] Update-Schritt für dich in der Abschlusszusammenfassung genannt (falls Deployment-Notizen existieren)
 - [ ] Abschlusszusammenfassung ausgegeben
 
 ### Fix-Checkliste (zusätzlich bei Bugfixes)

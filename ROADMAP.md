@@ -30,7 +30,7 @@ die aktive After-Release-Roadmap übernommen.
 | 21 | Desktop-App Packaging (pywebview/PyInstaller) | geplant | groß |
 | 22 | Update-Hinweise und Release Notes | geplant | klein–mittel |
 | 23 | Lizenz- und Drittanbieterhinweise | geplant | klein |
-| 24 | API-Key Maskierung UX (Fokus/Editierung-Verhalten) | geplant | klein |
+| 24 | API-Key Maskierung UX (Fokus/Editierung-Verhalten) | erledigt | klein |
 | 25 | TV-Pfad: Angleichung der Untertitel-Erkennung | erledigt | klein |
 | 26 | FAQ/Dokumentation: Docker-Importquellen und Volume-Mapping beschreiben | geplant | klein |
 | 27 | Web-Folder-Picker: Dynamische Titel je nach ausgewählter Kategorie | erledigt | klein |
@@ -62,6 +62,9 @@ die aktive After-Release-Roadmap übernommen.
 | 53 | Health-Check: Schweregrade aus der Oberfläche entfernen | geplant | klein–mittel |
 | 54 | Metadatendienste: Alle Abrufe auf den Retry-Helfer umstellen | geplant | mittel |
 | 55 | NFO-Agent: Multi-Provider-Metadatenvergleich mit Feld-Badges | geplant | mittel–groß |
+| 58 | Auth-Härtung: offener Default-Endpoint + fehlende Server-Whitelist | geplant | mittel |
+| 59 | API-Key löschen: expliziter UI-Weg (statt nur Ersetzen) | geplant | klein–mittel |
+| 60 | Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole | geplant | klein |
 
 ---
 
@@ -737,9 +740,11 @@ Klein: Recherche, Dokumentation und Pflege bei neuen gebündelten Abhängigkeite
 
 ---
 
-## 24. API-Key Maskierung UX (Fokus/Editierung-Verhalten)
+## 24. API-Key Maskierung UX (Fokus/Editierung-Verhalten) — erledigt (06.09.2026)
 
 Wenn ein maskierter API-Key (z. B. `****1234`) im Input-Feld vom Benutzer teil-editiert wird (ohne ihn ganz zu löschen oder komplett zu ersetzen), ignoriert das Backend den Wert stillschweigend aufgrund der `is_masked()`-Prüfung. Dies kann zu Verwirrung führen, da der Benutzer denkt, er hätte den Key geändert, dieser aber unverändert bleibt.
+
+**Umgesetzt** über den Gate-A2 Worker/Reviewer-Zyklus, Rückkanal-geprüft (scout/advocatus/produktberater). Zwei Nachbesserungsrunden (K1: Theme-Autosave-Regression, W1: Blur-Lücke) sowie eine Badge-Korrektur, alle durch die Kreativteam-Rollen verifiziert. Details und Rohoutputs unter `docs/sessions/2026-09-03-api-key-maskierung-ux/`, `docs/sessions/2026-09-05-abnahme-apikey-maskierung/`, `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`. Bewusst zurückgestellt: Items #59 (expliziter Löschen-Button) und #60 (Theme-Fehler sichtbar). Branch: `a2/20260906T055637Z` (noch nicht gemergt).
 
 ### Ziel
 Eine sauberere UX beim Editieren maskierter Werte.
@@ -1670,3 +1675,49 @@ Aktuell muss die Cache-Busting-Versionsnummer bei Frontend-Änderungen an mehrer
 
 **Lösungsidee:**
 Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das die Cache-Busting-Versionsnummer für `app.js` (inkl. aller eigenen Modul-Importe), `style.css` und `utilities.css` automatisiert und konsistent an einer zentralen Stelle hochzählt, statt manuell mehrere Dateien einzeln bearbeiten zu müssen.
+
+---
+
+## 58. Auth-Härtung: offener Default-Endpoint + fehlende Server-Whitelist
+
+**Einordnung / Priorität:** Sicherheit — als Schritt 0 vor Item #24 (API-Key-Maskierung UX) verbindlich angelegt, siehe `docs/sessions/2026-09-03-api-key-maskierung-ux/briefing.md`.
+
+**Kontext / Herkunft:** Fund der `advocatus`-Rolle während der Kreativteam-Session zu Item #24 (03.09.2026), real gegen den Code verifiziert (nicht nur behauptet).
+
+**Problem:**
+- **A4 — Offener Default-Endpoint:** Ohne gesetztes Passwort sind `/api/settings` und `/api/keys` im gesamten LAN unauthentifiziert erreichbar, ohne CSRF-Schutz oder Rate-Limit, bei Bind an `0.0.0.0`. Wer Docker ohne Reverse-Proxy betreibt (der Hauptkanal, siehe Item #18), setzt damit Credential-Schreibzugriff frei zugänglich ins Netz.
+- **B8 — Mass Assignment:** `gui/api/system_api.py:111-115` übernimmt beliebige, vom Client gesendete Settings-Keys ohne serverseitige Whitelist — ein Client kann Felder setzen, die die UI gar nicht vorsieht.
+
+**Lösungsidee:**
+- Auth-Middleware so härten, dass sicherheitsrelevante Endpunkte (`/api/settings`, `/api/keys`) auch im No-Passwort-Modus zumindest CSRF-geschützt und rate-limitiert sind, oder der No-Passwort-Modus zeigt beim Start/in der UI eine unübersehbare Warnung.
+- `system_api.py`: Settings-Updates auf eine explizite Feld-Whitelist beschränken statt beliebige `params`-Keys durchzureichen.
+
+**Aufwand (grob):** Mittel — Middleware-Anpassung + Tests für beide Fälle (kein Passwort gesetzt / Mass-Assignment-Versuch).
+
+---
+
+## 59. API-Key löschen: expliziter UI-Weg (statt nur Ersetzen)
+
+**Einordnung / Priorität:** Folge-Item aus der Rückkanal-Konsultation (06.09.2026) zum W1-Fix von Item #24 (API-Key-Maskierung UX), siehe `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`.
+
+**Kontext / Herkunft:** Der W1-Fix (Blur-Restore/Validierung gegen versehentliches Löschen durch einen einzelnen Tastendruck) hat als Nebenwirkung die zuvor im Briefing dokumentierte Semantik „leeres Feld speichern = Key löschen" vollständig deaktiviert. Alle drei Kreativteam-Rollen (advocatus, produktberater, scout) haben das unabhängig voneinander bestätigt. Bewusstes Löschen eines Keys ist über die Web-UI aktuell nicht mehr möglich, nur noch durch direktes Editieren der `.env`-Datei.
+
+**Entscheidung (Alex, 2026-09-06):** Für den Abschluss von Item #24 wird die Limitation dokumentiert und der dadurch tot gewordene Badge-Zweig „Wird entfernt" entfernt (Option A) — bewusst nicht in Item #24 selbst gelöst, um den Branch nicht weiter aufzublähen. Dieses Item ist der separate Folge-Auftrag für die eigentliche Lösung (Option B).
+
+**Lösungsidee:**
+- Expliziter „×"-Löschen-Button pro Key-Feld mit kurzer Bestätigung, statt die Lösch-Absicht implizit aus einem leeren gespeicherten Feld abzuleiten (das genau der Mechanismus war, den W1 aus gutem Grund abgeschaltet hat).
+
+**Aufwand (grob):** Klein–mittel.
+
+---
+
+## 60. Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole
+
+**Einordnung / Priorität:** Folge-Item aus der Rückkanal-Konsultation (06.09.2026) zum K1-Fix von Item #24 (API-Key-Maskierung UX), siehe `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`.
+
+**Kontext / Herkunft:** Nach dem K1-Fix (Theme-Autosave schickt keine maskierten Key-Felder mehr mit) meldet ein fehlschlagender Theme-Save weiterhin nur per `console.error` (`gui/static/app.js:512-514`), nicht sichtbar in der UI — bewusst nicht mit in den K1/W1-Fix genommen, um Scope Creep auf Item #24 zu vermeiden (Theme-Save schlägt auf `localhost` praktisch nie fehl, kein Datenverlust- oder Sicherheitsrisiko).
+
+**Lösungsidee:**
+- Bei fehlschlagendem Theme-Autosave eine sichtbare, kurze UI-Meldung (Toast/Inline-Hinweis) statt nur der Konsolen-Ausgabe.
+
+**Aufwand (grob):** Klein.

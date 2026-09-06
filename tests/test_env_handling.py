@@ -5,8 +5,9 @@ import tempfile
 from unittest.mock import patch
 from flask import Flask
 
-# Import the blueprint
+# Import the blueprints
 from gui.api.system_api import system_api
+from gui.api.onboarding_api import onboarding_api
 from gui.core.persistence import load_env_keys, save_env_keys, is_masked, mask_credential
 
 class TestEnvHandling(unittest.TestCase):
@@ -21,7 +22,9 @@ class TestEnvHandling(unittest.TestCase):
         os.environ.pop("TVDB_API_KEY", None)
 
         self.app = Flask(__name__)
+        self.app.secret_key = "test_secret_key"
         self.app.register_blueprint(system_api, url_prefix='/api')
+        self.app.register_blueprint(onboarding_api, url_prefix='/api')
         self.client = self.app.test_client()
 
     def tearDown(self):
@@ -105,7 +108,7 @@ class TestEnvHandling(unittest.TestCase):
         self.assertFalse(is_masked(""))
 
     def test_api_protection(self):
-        # 1. Post a real key
+        # 1. Post real keys (AC10, AC14)
         response = self.client.post('/api/settings', json={
             "tmdb_api_key": "my_real_tmdb_key",
             "telegram_token": "my_real_tg_token",
@@ -115,11 +118,16 @@ class TestEnvHandling(unittest.TestCase):
             "dummy_setting": False
         })
         self.assertEqual(response.status_code, 200)
+        res_data = response.json
+        self.assertEqual(res_data.get("status"), "success")
+        self.assertIn("fields", res_data)
+        self.assertEqual(res_data["fields"].get("tmdb_api_key", {}).get("status"), "saved")
+        self.assertEqual(res_data["fields"].get("telegram_token", {}).get("status"), "saved")
 
         # Verify it's loaded in env
         self.assertEqual(os.environ.get("TMDB_API_KEY"), "my_real_tmdb_key")
 
-        # 2. Get settings, they should be masked
+        # 2. Get settings, they should be masked without plaintext leak (AC13)
         response = self.client.get('/api/settings')
         self.assertEqual(response.status_code, 200)
         data = response.json
@@ -128,21 +136,52 @@ class TestEnvHandling(unittest.TestCase):
         self.assertTrue(data["telegram_chat_id"].startswith("****"))
         self.assertTrue(data["whatsapp_apikey"].startswith("****"))
         self.assertTrue(data["whatsapp_phone"].startswith("****"))
+        self.assertNotIn("my_real_tmdb_key", str(data))
+        self.assertNotIn("my_real_tg_token", str(data))
 
-        # 3. Post back the masked keys
+        # 3. Post back masked keys to /api/settings must return HTTP 400 (AC8)
         response = self.client.post('/api/settings', json={
-            "tmdb_api_key": data["tmdb_api_key"],
-            "telegram_token": data["telegram_token"],
-            "telegram_chat_id": data["telegram_chat_id"],
-            "whatsapp_apikey": data["whatsapp_apikey"],
-            "whatsapp_phone": data["whatsapp_phone"],
-            "dummy_setting": True # Change something else
+            "telegram_token": data["telegram_token"]
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json.get("field"), "telegram_token")
+        self.assertIn("Maskierter Wert", response.json.get("error", ""))
+
+        response = self.client.post('/api/settings', json={
+            "tmdb_api_key": data["tmdb_api_key"]
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json.get("field"), "tmdb_api_key")
+
+        # 4. Post masked key to /api/keys must return HTTP 400 (AC9)
+        response = self.client.post('/api/keys', json={
+            "TMDB_API_KEY": "****1234"
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json.get("field"), "TMDB_API_KEY")
+        self.assertIn("Maskierter Wert", response.json.get("error", ""))
+
+        # 5. Whitespace-only input must return HTTP 400 and not overwrite (AC12)
+        response = self.client.post('/api/settings', json={
+            "telegram_token": "   "
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json.get("field"), "telegram_token")
+        self.assertIn("Leerzeichen", response.json.get("error", ""))
+
+        response = self.client.post('/api/keys', json={
+            "TMDB_API_KEY": "   "
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json.get("field"), "TMDB_API_KEY")
+
+        # 6. Unchanged fields omitted from POST leave existing keys intact (AC11)
+        response = self.client.post('/api/settings', json={
+            "dummy_setting": True
         })
         self.assertEqual(response.status_code, 200)
 
-        # Verify real keys are intact
         self.assertEqual(os.environ.get("TMDB_API_KEY"), "my_real_tmdb_key")
-
         from gui.core.persistence import load_settings
         settings = load_settings()
         self.assertEqual(settings["telegram_token"], "my_real_tg_token")
@@ -150,6 +189,21 @@ class TestEnvHandling(unittest.TestCase):
         self.assertEqual(settings["whatsapp_apikey"], "my_real_wa_key")
         self.assertEqual(settings["whatsapp_phone"], "my_real_wa_phone")
         self.assertEqual(settings["dummy_setting"], True)
+
+        # 7. GET /api/keys does not leak plaintext (AC13)
+        response = self.client.get('/api/keys')
+        self.assertEqual(response.status_code, 200)
+        keys_data = response.json
+        self.assertTrue(keys_data.get("TMDB_API_KEY", "").startswith("****"))
+        self.assertNotIn("my_real_tmdb_key", str(keys_data))
+
+        # 8. Legitimate new keys are stored and reported (AC10, AC14)
+        response = self.client.post('/api/keys', json={
+            "TMDB_API_KEY": "  brand_new_tmdb_key  "
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json.get("fields", {}).get("TMDB_API_KEY", {}).get("status"), "saved")
+        self.assertEqual(os.environ.get("TMDB_API_KEY"), "brand_new_tmdb_key")
 
     def test_metadata_reload(self):
         import gui.mw_metadata as mw

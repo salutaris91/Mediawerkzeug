@@ -6,6 +6,7 @@ import { osBasename, formatFskLabel } from './js/fsk_batch.js?v=91';
 import { fetchStats, fetchYoutubeSubscriptions, fetchSmartInboxSuggestions } from './js/welcome.js?v=91';
 import { loadConversionRecommendations, triggerQualityHintUpdates } from './js/intelligence.js?v=91';
 import { updateMwDataPanel, prepareSeriesPayload } from './js/nfo_ui.js?v=91';
+import { setupMaskedInput, setMaskedInputValue, validateAllMaskedFields } from './js/masked_input.js?v=91';
 
 // ==========================================================================
 // AUTHENTICATION & CSRF WRAPPER
@@ -485,6 +486,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (currentSettings) {
                 currentSettings.app_theme = newTheme;
                 try {
+                    const keyFields = [
+                        "tmdb_api_key",
+                        "tvdb_api_key",
+                        "telegram_token",
+                        "telegram_chat_id",
+                        "whatsapp_apikey",
+                        "whatsapp_phone"
+                    ];
                     const payload = {
                         ...currentSettings,
                         app_theme: newTheme,
@@ -492,11 +501,17 @@ document.addEventListener("DOMContentLoaded", () => {
                         sync_categories: (currentSettings.sync_categories || []).filter(c => c.id.trim() !== "" && c.name.trim() !== ""),
                         local_download_folders: (currentSettings.local_download_folders || []).filter(f => f.path && f.path.trim() !== "")
                     };
-                    await fetch("/api/settings", {
+                    for (const k of keyFields) {
+                        delete payload[k];
+                    }
+                    const response = await fetch("/api/settings", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload)
                     });
+                    if (!response.ok) {
+                        console.error("Fehler beim automatischen Speichern des Themes:", response.status, response.statusText);
+                    }
                 } catch (e) {
                     console.error("Fehler beim automatischen Speichern des Themes:", e);
                 }
@@ -8381,11 +8396,43 @@ async function loadSettings() {
 
             setCheckbox("settings-notify-macos", currentSettings.notify_macos);
             setCheckbox("settings-notify-telegram", currentSettings.notify_telegram);
-            setInputVal("settings-telegram-token", currentSettings.telegram_token);
-            setInputVal("settings-telegram-chat-id", currentSettings.telegram_chat_id);
+
+            const tgTokenEl = document.getElementById("settings-telegram-token");
+            if (tgTokenEl) {
+                setupMaskedInput(tgTokenEl);
+                setMaskedInputValue(tgTokenEl, currentSettings.telegram_token, {
+                    configured: "Hinterlegt",
+                    unconfigured: "z.B. 123456:ABC-DEF..."
+                });
+            }
+            const tgChatIdEl = document.getElementById("settings-telegram-chat-id");
+            if (tgChatIdEl) {
+                setupMaskedInput(tgChatIdEl);
+                setMaskedInputValue(tgChatIdEl, currentSettings.telegram_chat_id, {
+                    configured: "Hinterlegt",
+                    unconfigured: "z.B. -100123456789"
+                });
+            }
+
             setCheckbox("settings-notify-whatsapp", currentSettings.notify_whatsapp);
-            setInputVal("settings-whatsapp-apikey", currentSettings.whatsapp_apikey);
-            setInputVal("settings-whatsapp-phone", currentSettings.whatsapp_phone);
+
+            const waApiKeyEl = document.getElementById("settings-whatsapp-apikey");
+            if (waApiKeyEl) {
+                setupMaskedInput(waApiKeyEl);
+                setMaskedInputValue(waApiKeyEl, currentSettings.whatsapp_apikey, {
+                    configured: "Hinterlegt",
+                    unconfigured: "apikey von CallMeBot"
+                });
+            }
+            const waPhoneEl = document.getElementById("settings-whatsapp-phone");
+            if (waPhoneEl) {
+                setupMaskedInput(waPhoneEl);
+                setMaskedInputValue(waPhoneEl, currentSettings.whatsapp_phone, {
+                    configured: "Hinterlegt",
+                    unconfigured: "+49123456789"
+                });
+            }
+
             setInputVal("settings-notify-min-size-macos", currentSettings.notify_min_size_macos !== undefined ? currentSettings.notify_min_size_macos : 10);
             setInputVal("settings-notify-min-size-telegram", currentSettings.notify_min_size_telegram !== undefined ? currentSettings.notify_min_size_telegram : 10);
             setInputVal("settings-notify-min-size-whatsapp", currentSettings.notify_min_size_whatsapp !== undefined ? currentSettings.notify_min_size_whatsapp : 10);
@@ -8441,38 +8488,36 @@ async function loadSettings() {
                 .then(keys => {
                     const tmdbInput = document.getElementById("settings-tmdb-key");
                     if (tmdbInput) {
-                        tmdbInput.value = keys.TMDB_API_KEY || "";
-                        tmdbInput.dataset.original = keys.TMDB_API_KEY || "";
-                        if (keys.TMDB_API_KEY) {
-                            tmdbInput.placeholder = "Hinterlegt";
-                        } else {
-                            tmdbInput.placeholder = "Nicht konfiguriert (Metadaten eingeschränkt)";
-                        }
+                        setupMaskedInput(tmdbInput);
+                        setMaskedInputValue(tmdbInput, keys.TMDB_API_KEY || "", {
+                            configured: "Hinterlegt",
+                            unconfigured: "Nicht konfiguriert (Metadaten eingeschränkt)"
+                        });
                     }
                     const tvdbInput = document.getElementById("settings-tvdb-key");
                     if (tvdbInput) {
-                        tvdbInput.value = keys.TVDB_API_KEY || "";
-                        tvdbInput.dataset.original = keys.TVDB_API_KEY || "";
-                        if (keys.TVDB_API_KEY) {
-                            tvdbInput.placeholder = "Hinterlegt";
-                        } else {
-                            tvdbInput.placeholder = "Nicht konfiguriert (optional)";
-                        }
+                        setupMaskedInput(tvdbInput);
+                        setMaskedInputValue(tvdbInput, keys.TVDB_API_KEY || "", {
+                            configured: "Hinterlegt",
+                            unconfigured: "Nicht konfiguriert (optional)"
+                        });
                     }
                 })
                 .catch(e => {
                     console.error("Error loading API keys:", e);
                     const tmdbInput = document.getElementById("settings-tmdb-key");
                     if (tmdbInput) {
-                        tmdbInput.value = "";
-                        tmdbInput.dataset.original = "";
-                        tmdbInput.placeholder = "Nicht konfiguriert (Fehler beim Laden)";
+                        setupMaskedInput(tmdbInput);
+                        setMaskedInputValue(tmdbInput, "", {
+                            unconfigured: "Nicht konfiguriert (Fehler beim Laden)"
+                        });
                     }
                     const tvdbInput = document.getElementById("settings-tvdb-key");
                     if (tvdbInput) {
-                        tvdbInput.value = "";
-                        tvdbInput.dataset.original = "";
-                        tvdbInput.placeholder = "Nicht konfiguriert (Fehler beim Laden)";
+                        setupMaskedInput(tvdbInput);
+                        setMaskedInputValue(tvdbInput, "", {
+                            unconfigured: "Nicht konfiguriert (Fehler beim Laden)"
+                        });
                     }
                 });
 
@@ -9721,6 +9766,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const btnSaveSettings = document.getElementById("btn-save-settings");
     if(btnSaveSettings) {
         btnSaveSettings.addEventListener("click", async () => {
+            const KEY_FIELD_IDS = [
+                "settings-tmdb-key",
+                "settings-tvdb-key",
+                "settings-telegram-token",
+                "settings-telegram-chat-id",
+                "settings-whatsapp-apikey",
+                "settings-whatsapp-phone"
+            ];
+
+            // Validation Gate: Check all masked fields
+            const validation = validateAllMaskedFields(KEY_FIELD_IDS);
+            if (!validation.valid) {
+                const firstErr = validation.errors[0];
+                const el = document.getElementById(firstErr.fieldId);
+                if (el) el.focus();
+                alert("Fehler beim Speichern: " + firstErr.error);
+                return;
+            }
+
+            const changed = validation.changedFields;
             const checkDepUpdatesEl = document.getElementById("settings-check-dependency-updates");
             const payload = {
                 inbox_dir: document.getElementById("settings-inbox-dir")?.value || "",
@@ -9738,11 +9803,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 notify_macos: document.getElementById("settings-notify-macos")?.checked || false,
                 notify_telegram: document.getElementById("settings-notify-telegram")?.checked || false,
-                telegram_token: document.getElementById("settings-telegram-token")?.value || "",
-                telegram_chat_id: document.getElementById("settings-telegram-chat-id")?.value || "",
                 notify_whatsapp: document.getElementById("settings-notify-whatsapp")?.checked || false,
-                whatsapp_apikey: document.getElementById("settings-whatsapp-apikey")?.value || "",
-                whatsapp_phone: document.getElementById("settings-whatsapp-phone")?.value || "",
                 notify_min_size_macos: parseInt(document.getElementById("settings-notify-min-size-macos")?.value, 10) || 0,
                 notify_min_size_telegram: parseInt(document.getElementById("settings-notify-min-size-telegram")?.value, 10) || 0,
                 notify_min_size_whatsapp: parseInt(document.getElementById("settings-notify-min-size-whatsapp")?.value, 10) || 0,
@@ -9771,6 +9832,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 storage_targets: (currentSettings.storage_targets || []).filter(t => t.id && t.id.trim() !== "")
             };
 
+            // Dirty-tracking for settings credentials
+            if ("settings-telegram-token" in changed) {
+                payload.telegram_token = changed["settings-telegram-token"];
+            }
+            if ("settings-telegram-chat-id" in changed) {
+                payload.telegram_chat_id = changed["settings-telegram-chat-id"];
+            }
+            if ("settings-whatsapp-apikey" in changed) {
+                payload.whatsapp_apikey = changed["settings-whatsapp-apikey"];
+            }
+            if ("settings-whatsapp-phone" in changed) {
+                payload.whatsapp_phone = changed["settings-whatsapp-phone"];
+            }
+
             try {
                 const response = await fetch("/api/settings", {
                     method: "POST",
@@ -9779,23 +9854,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
 
                 if (response.ok) {
-                    const tmdbInput = document.getElementById("settings-tmdb-key");
-                    const tvdbInput = document.getElementById("settings-tvdb-key");
                     const keyPayload = {};
-
-                    if (tmdbInput) {
-                        const val = tmdbInput.value.trim();
-                        const orig = tmdbInput.dataset.original || "";
-                        if (val !== orig) {
-                            keyPayload.TMDB_API_KEY = val;
-                        }
+                    if ("settings-tmdb-key" in changed) {
+                        keyPayload.TMDB_API_KEY = changed["settings-tmdb-key"];
                     }
-                    if (tvdbInput) {
-                        const val = tvdbInput.value.trim();
-                        const orig = tvdbInput.dataset.original || "";
-                        if (val !== orig) {
-                            keyPayload.TVDB_API_KEY = val;
-                        }
+                    if ("settings-tvdb-key" in changed) {
+                        keyPayload.TVDB_API_KEY = changed["settings-tvdb-key"];
                     }
 
                     let keysSavedSuccessfully = true;
@@ -9822,7 +9886,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     loadSettings(); // Reload
                 } else {
-                    alert("Fehler beim Speichern der Einstellungen.");
+                    const errData = await response.json().catch(() => ({}));
+                    alert("Fehler beim Speichern der Einstellungen: " + (errData.error || response.statusText));
                 }
             } catch (e) {
                 alert("Verbindungsfehler: " + e);

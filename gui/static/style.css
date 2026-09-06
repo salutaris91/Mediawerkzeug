@@ -3667,3 +3667,84 @@ body.runtime-docker .docker-only-info {
         margin-left: 0;
     }
 }
+
+/* ==========================================================================
+   MASKED KEY INPUTS (Item #24)
+   ========================================================================== */
+.masked-key-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.masked-key-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.masked-key-input-wrapper input.masked-key-input {
+    padding-right: 36px;
+}
+
+.masked-key-badge {
+    position: absolute;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    pointer-events: none;
+    user-select: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.masked-key-badge.badge-configured {
+    color: var(--accent, #2563eb);
+    background-color: rgba(37, 99, 235, 0.12);
+}
+
+.masked-key-badge.badge-unconfigured {
+    color: var(--text-muted, #94a3b8);
+    background-color: transparent;
+}
+
+.masked-key-badge.badge-valid {
+    color: var(--success, #10b981);
+    background-color: rgba(16, 185, 129, 0.12);
+}
+
+.masked-key-badge.badge-invalid {
+    color: var(--danger, #ef4444);
+    background-color: rgba(239, 68, 68, 0.12);
+}
+
+.masked-key-input.is-invalid {
+    border-color: var(--danger, #ef4444) !important;
+    background-color: rgba(239, 68, 68, 0.05) !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+}
+
+.masked-key-helper {
+    font-size: 0.8rem;
+    color: var(--text-muted, #94a3b8);
+    margin-top: 2px;
+}
+
+.masked-key-error {
+    font-size: 0.8rem;
+    color: var(--danger, #ef4444);
+    min-height: 0;
+    display: none;
+    margin-top: 2px;
+}
+
+.masked-key-error:not(:empty) {
+    display: block;
+}

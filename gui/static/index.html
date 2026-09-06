@@ -1575,13 +1575,23 @@
                                         </div>
                                     </div>
                                     <div class="inline-style-137">
-                                        <div class="inline-style-138">
+                                        <div class="inline-style-138 masked-key-field" data-field-id="settings-telegram-token">
                                             <label for="settings-telegram-token" class="inline-style-134">Bot Token:</label>
-                                            <input type="text" id="settings-telegram-token" class="inline-style-40">
+                                            <div class="masked-key-input-wrapper">
+                                                <input type="text" id="settings-telegram-token" class="inline-style-40 masked-key-input" placeholder="z.B. 123456:ABC-DEF..." aria-describedby="settings-telegram-token-helper settings-telegram-token-error">
+                                                <span class="masked-key-badge" id="settings-telegram-token-badge" aria-hidden="true">○</span>
+                                            </div>
+                                            <span class="masked-key-helper" id="settings-telegram-token-helper">Erstellen über @BotFather auf Telegram</span>
+                                            <span class="masked-key-error" id="settings-telegram-token-error" role="alert" aria-live="polite"></span>
                                         </div>
-                                        <div class="inline-style-139">
+                                        <div class="inline-style-139 masked-key-field" data-field-id="settings-telegram-chat-id">
                                             <label class="inline-style-134" for="settings-telegram-chat-id">Chat ID:</label>
-                                            <input type="text" id="settings-telegram-chat-id" class="inline-style-40">
+                                            <div class="masked-key-input-wrapper">
+                                                <input type="text" id="settings-telegram-chat-id" class="inline-style-40 masked-key-input" placeholder="z.B. -100123456789" aria-describedby="settings-telegram-chat-id-helper settings-telegram-chat-id-error">
+                                                <span class="masked-key-badge" id="settings-telegram-chat-id-badge" aria-hidden="true">○</span>
+                                            </div>
+                                            <span class="masked-key-helper" id="settings-telegram-chat-id-helper">Für Gruppen: ID beginnt mit -100. Nutze @userinfobot.</span>
+                                            <span class="masked-key-error" id="settings-telegram-chat-id-error" role="alert" aria-live="polite"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -1600,13 +1610,23 @@
                                         </div>
                                     </div>
                                     <div class="inline-style-137">
-                                        <div class="inline-style-138">
+                                        <div class="inline-style-138 masked-key-field" data-field-id="settings-whatsapp-apikey">
                                             <label for="settings-whatsapp-apikey" class="inline-style-134">API Key:</label>
-                                            <input type="text" id="settings-whatsapp-apikey" class="inline-style-40" placeholder="apikey von CallMeBot">
+                                            <div class="masked-key-input-wrapper">
+                                                <input type="text" id="settings-whatsapp-apikey" class="inline-style-40 masked-key-input" placeholder="apikey von CallMeBot" aria-describedby="settings-whatsapp-apikey-helper settings-whatsapp-apikey-error">
+                                                <span class="masked-key-badge" id="settings-whatsapp-apikey-badge" aria-hidden="true">○</span>
+                                            </div>
+                                            <span class="masked-key-helper" id="settings-whatsapp-apikey-helper">API-Key aus der CallMeBot-App</span>
+                                            <span class="masked-key-error" id="settings-whatsapp-apikey-error" role="alert" aria-live="polite"></span>
                                         </div>
-                                        <div class="inline-style-139">
+                                        <div class="inline-style-139 masked-key-field" data-field-id="settings-whatsapp-phone">
                                             <label for="settings-whatsapp-phone" class="inline-style-134">Handynummer:</label>
-                                            <input type="text" id="settings-whatsapp-phone" class="inline-style-40" placeholder="+49123456789">
+                                            <div class="masked-key-input-wrapper">
+                                                <input type="text" id="settings-whatsapp-phone" class="inline-style-40 masked-key-input" placeholder="+49123456789" aria-describedby="settings-whatsapp-phone-helper settings-whatsapp-phone-error">
+                                                <span class="masked-key-badge" id="settings-whatsapp-phone-badge" aria-hidden="true">○</span>
+                                            </div>
+                                            <span class="masked-key-helper" id="settings-whatsapp-phone-helper">Internationales Format, z.B. +49 für Deutschland</span>
+                                            <span class="masked-key-error" id="settings-whatsapp-phone-error" role="alert" aria-live="polite"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -1626,13 +1646,23 @@
                             <span class="form-label-style">Metadaten API-Keys:</span>
                             <div class="inline-style-129">
                                 <div class="inline-style-135">
-                                    <div class="inline-style-138" style="margin-bottom: 10px;">
+                                    <div class="inline-style-138 masked-key-field" data-field-id="settings-tmdb-key" style="margin-bottom: 10px;">
                                         <label for="settings-tmdb-key" class="inline-style-134">TMDb API-Key:</label>
-                                        <input type="text" id="settings-tmdb-key" class="inline-style-40" placeholder="Lade Konfiguration...">
+                                        <div class="masked-key-input-wrapper">
+                                            <input type="text" id="settings-tmdb-key" class="inline-style-40 masked-key-input" placeholder="Lade Konfiguration..." aria-describedby="settings-tmdb-key-helper settings-tmdb-key-error">
+                                            <span class="masked-key-badge" id="settings-tmdb-key-badge" aria-hidden="true">○</span>
+                                        </div>
+                                        <span class="masked-key-helper" id="settings-tmdb-key-helper">Kostenlos registrieren unter themoviedb.org</span>
+                                        <span class="masked-key-error" id="settings-tmdb-key-error" role="alert" aria-live="polite"></span>
                                     </div>
-                                    <div class="inline-style-139">
+                                    <div class="inline-style-139 masked-key-field" data-field-id="settings-tvdb-key">
                                         <label for="settings-tvdb-key" class="inline-style-134">TVDb API-Key:</label>
-                                        <input type="text" id="settings-tvdb-key" class="inline-style-40" placeholder="Lade Konfiguration...">
+                                        <div class="masked-key-input-wrapper">
+                                            <input type="text" id="settings-tvdb-key" class="inline-style-40 masked-key-input" placeholder="Lade Konfiguration..." aria-describedby="settings-tvdb-key-helper settings-tvdb-key-error">
+                                            <span class="masked-key-badge" id="settings-tvdb-key-badge" aria-hidden="true">○</span>
+                                        </div>
+                                        <span class="masked-key-helper" id="settings-tvdb-key-helper">Optional. Kostenlos registrieren unter thetvdb.com</span>
+                                        <span class="masked-key-error" id="settings-tvdb-key-error" role="alert" aria-live="polite"></span>
                                     </div>
                                     <p class="inline-style-118" style="margin-top: 8px;">Keys können hier oder direkt in der lokalen Config (z.B. <code>/config/.env</code>) gepflegt werden.</p>
                                 </div>
