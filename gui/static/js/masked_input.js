@@ -84,14 +84,18 @@ export function updateMaskedInputState(inputEl) {
                 if (badge.setAttribute) badge.setAttribute("title", "Wird neu gespeichert");
             }
         } else {
-            // Emptied cleanly by user (removing key: val === "")
+            // Field emptied during edit (val === "").
+            // Note: Deleting/clearing an API key via the UI is currently not supported
+            // because empty inputs restore the original value on blur / are treated as
+            // unchanged by the W1 fix. Explicit key deletion via the UI is tracked in
+            // Roadmap Item #59. We show the unconfigured badge with a neutral title.
             if (inputEl.classList) inputEl.classList.remove("is-invalid");
             if (inputEl.setAttribute) inputEl.setAttribute("aria-invalid", "false");
             if (errorEl) errorEl.textContent = "";
             if (badge) {
                 badge.textContent = "○";
                 badge.className = "masked-key-badge badge-unconfigured";
-                if (badge.setAttribute) badge.setAttribute("title", "Wird entfernt");
+                if (badge.setAttribute) badge.setAttribute("title", hasKey ? "Unverändert (Löschen nicht unterstützt)" : "Nicht konfiguriert");
             }
         }
     }

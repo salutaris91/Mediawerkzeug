@@ -409,3 +409,27 @@ test("W1: User clears field, types a new valid key, blurs -> new key is preserve
         dom.restore();
     }
 });
+
+test("W1 / Decision A: Cleared input badge does not claim key removal (Roadmap Item #59)", () => {
+    const dom = createMockDOM(["settings-telegram-token"]);
+    try {
+        const input = dom.elements["settings-telegram-token"];
+        const badge = dom.elements["settings-telegram-token-badge"];
+        setupMaskedInput(input);
+        setMaskedInputValue(input, "****5678", { configured: "Hinterlegt" });
+
+        input.focus();
+        input.dispatch("keydown", { key: "Backspace" });
+        assert.strictEqual(input.value, "");
+        assert.strictEqual(input.dataset.editing, "true");
+
+        // State update when cleared
+        updateMaskedInputState(input);
+
+        assert.notStrictEqual(badge.attributes["title"], "Wird entfernt");
+        assert.strictEqual(badge.attributes["title"], "Unverändert (Löschen nicht unterstützt)");
+        assert.strictEqual(badge.textContent, "○");
+    } finally {
+        dom.restore();
+    }
+});
