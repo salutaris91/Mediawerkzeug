@@ -9,8 +9,10 @@ const __dirname = path.dirname(__filename);
 
 const indexHtmlPath = path.resolve(__dirname, '../../gui/static/index.html');
 const appJsPath = path.resolve(__dirname, '../../gui/static/app.js');
+const styleCssPath = path.resolve(__dirname, '../../gui/static/style.css');
+const roadmapPath = path.resolve(__dirname, '../../ROADMAP.md');
 
-test('DOM Structure: index.html contains settings-app-theme-error element directly under settings-app-theme', () => {
+test('DOM Structure & Styling: index.html contains settings-app-theme-error with theme class and no inline style', () => {
     const indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
 
     // Verify settings-tab-appearance contains settings-app-theme
@@ -26,10 +28,19 @@ test('DOM Structure: index.html contains settings-app-theme-error element direct
     assert.ok(themeSelectPos > appearanceTabStart, 'settings-app-theme must be inside settings-tab-appearance');
     assert.ok(themeErrorPos > themeSelectPos, 'settings-app-theme-error must be located after settings-app-theme');
 
-    // Verify default hidden class
+    // Verify default hidden class and theme-autosave-error class without inline styles
     const errorTagMatch = indexHtml.match(/<div[^>]*id="settings-app-theme-error"[^>]*>/);
     assert.ok(errorTagMatch, 'settings-app-theme-error tag must exist');
-    assert.ok(errorTagMatch[0].includes('class="hidden"'), 'settings-app-theme-error must have class="hidden" by default');
+    assert.ok(/\bclass="[^"]*\bhidden\b[^"]*"/.test(errorTagMatch[0]), 'settings-app-theme-error must have class="hidden" by default');
+    assert.ok(/\bclass="[^"]*\btheme-autosave-error\b[^"]*"/.test(errorTagMatch[0]), 'settings-app-theme-error must have class="theme-autosave-error"');
+    assert.strictEqual(/style\s*=\s*"[^"]*"/.test(errorTagMatch[0]), false, 'settings-app-theme-error must not have an inline style attribute');
+
+    // Verify style.css defines theme-autosave-error with var(--danger, ...)
+    const styleCss = fs.readFileSync(styleCssPath, 'utf8');
+    assert.ok(styleCss.includes('.theme-autosave-error'), 'style.css must define .theme-autosave-error');
+    const cssRuleMatch = styleCss.match(/\.theme-autosave-error\s*\{([^}]+)\}/);
+    assert.ok(cssRuleMatch, '.theme-autosave-error rule block must exist in style.css');
+    assert.ok(cssRuleMatch[1].includes('var(--danger'), '.theme-autosave-error must use var(--danger, ...)');
 });
 
 // DOM Mocking helper
@@ -264,4 +275,13 @@ test('Theme Autosave AK4: successful save clears any previous error and keeps er
         globalThis.fetch = originalFetch;
         console.error = originalConsoleError;
     }
+});
+
+test('Roadmap: Item 60 retains deferred context and reason in ROADMAP.md', () => {
+    const roadmap = fs.readFileSync(roadmapPath, 'utf8');
+    assert.ok(roadmap.includes('## 60. Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole'), 'ROADMAP.md must contain Item 60');
+    const item60Section = roadmap.substring(roadmap.indexOf('## 60. Theme-Autosave'));
+    assert.ok(item60Section.includes('Scope Creep'), 'Item 60 must mention avoiding Scope Creep on Item #24');
+    assert.ok(item60Section.includes('localhost'), 'Item 60 must mention localhost rationale');
+    assert.ok(item60Section.includes('Status:** Erledigt'), 'Item 60 status must remain Erledigt');
 });

@@ -1717,7 +1717,7 @@ Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das d
 
 **Einordnung / Priorität:** Folge-Item aus der Rückkanal-Konsultation (06.09.2026) zum K1-Fix von Item #24 (API-Key-Maskierung UX), siehe `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`.
 
-**Kontext / Herkunft:** Nach dem K1-Fix (Theme-Autosave schickt keine maskierten Key-Felder mehr mit) meldete ein fehlschlagender Theme-Save nur per `console.error` (`gui/static/app.js:512-514`), nicht sichtbar in der UI.
+**Kontext / Herkunft:** Nach dem K1-Fix (Theme-Autosave schickt keine maskierten Key-Felder mehr mit) meldete ein fehlschlagender Theme-Save nur per `console.error` (`gui/static/app.js:512-514`), nicht sichtbar in der UI. Wurde bewusst nicht mit in den K1/W1-Fix genommen, um Scope Creep auf Item #24 zu vermeiden — der Theme-Save schlägt auf `localhost` praktisch nie fehl und stellt kein Datenverlust- oder Sicherheitsrisiko dar.
 
 **Umsetzung:**
 - Inline-Fehlerelement (`#settings-app-theme-error`) direkt unter dem Farbthema-Dropdown in `gui/static/index.html` eingefügt.
