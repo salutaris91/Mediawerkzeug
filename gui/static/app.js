@@ -482,6 +482,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const newTheme = this.value;
             applyTheme(newTheme);
 
+            const themeError = document.getElementById("settings-app-theme-error");
+            if (themeError) {
+                themeError.textContent = "";
+                themeError.classList.add("hidden");
+            }
+
             // Auto-save setting to backend settings.json
             if (currentSettings) {
                 currentSettings.app_theme = newTheme;
@@ -511,9 +517,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                     if (!response.ok) {
                         console.error("Fehler beim automatischen Speichern des Themes:", response.status, response.statusText);
+                        if (themeError) {
+                            themeError.textContent = "Farbthema konnte nicht gespeichert werden.";
+                            themeError.classList.remove("hidden");
+                        }
                     }
                 } catch (e) {
                     console.error("Fehler beim automatischen Speichern des Themes:", e);
+                    if (themeError) {
+                        themeError.textContent = "Farbthema konnte nicht gespeichert werden.";
+                        themeError.classList.remove("hidden");
+                    }
                 }
             }
         });

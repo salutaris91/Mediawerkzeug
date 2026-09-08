@@ -64,7 +64,7 @@ die aktive After-Release-Roadmap übernommen.
 | 55 | NFO-Agent: Multi-Provider-Metadatenvergleich mit Feld-Badges | geplant | mittel–groß |
 | 58 | Auth-Härtung: offener Default-Endpoint + fehlende Server-Whitelist | geplant | mittel |
 | 59 | API-Key löschen: expliziter UI-Weg (statt nur Ersetzen) | geplant | klein–mittel |
-| 60 | Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole | geplant | klein |
+| 60 | Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole | erledigt | klein |
 
 ---
 
@@ -1713,11 +1713,16 @@ Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das d
 
 ## 60. Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole
 
+**Status:** Erledigt (2026-09-08).
+
 **Einordnung / Priorität:** Folge-Item aus der Rückkanal-Konsultation (06.09.2026) zum K1-Fix von Item #24 (API-Key-Maskierung UX), siehe `docs/sessions/2026-09-06-rueckblick-abnahme-apikey-maskierung/`.
 
-**Kontext / Herkunft:** Nach dem K1-Fix (Theme-Autosave schickt keine maskierten Key-Felder mehr mit) meldet ein fehlschlagender Theme-Save weiterhin nur per `console.error` (`gui/static/app.js:512-514`), nicht sichtbar in der UI — bewusst nicht mit in den K1/W1-Fix genommen, um Scope Creep auf Item #24 zu vermeiden (Theme-Save schlägt auf `localhost` praktisch nie fehl, kein Datenverlust- oder Sicherheitsrisiko).
+**Kontext / Herkunft:** Nach dem K1-Fix (Theme-Autosave schickt keine maskierten Key-Felder mehr mit) meldete ein fehlschlagender Theme-Save nur per `console.error` (`gui/static/app.js:512-514`), nicht sichtbar in der UI.
 
-**Lösungsidee:**
-- Bei fehlschlagendem Theme-Autosave eine sichtbare, kurze UI-Meldung (Toast/Inline-Hinweis) statt nur der Konsolen-Ausgabe.
+**Umsetzung:**
+- Inline-Fehlerelement (`#settings-app-theme-error`) direkt unter dem Farbthema-Dropdown in `gui/static/index.html` eingefügt.
+- Fehlerbehandlung in `gui/static/app.js` sowohl im `!response.ok`-Pfad als auch im `catch`-Pfad integriert (`console.error` bleibt erhalten).
+- Vor jedem neuen Speicherversuch sowie bei Erfolg wird die Fehlermeldung zurückgesetzt.
+- Vollständige Frontend-Testsuite in `tests/frontend/theme_autosave.test.js` (AK1–AK5).
 
 **Aufwand (grob):** Klein.
