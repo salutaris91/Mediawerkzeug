@@ -3748,3 +3748,9 @@ body.runtime-docker .docker-only-info {
 .masked-key-error:not(:empty) {
     display: block;
 }
+
+.theme-autosave-error {
+    font-size: 0.85em;
+    color: var(--danger, #ef4444);
+    margin-top: 6px;
+}
