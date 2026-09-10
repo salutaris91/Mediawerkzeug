@@ -65,6 +65,8 @@ die aktive After-Release-Roadmap übernommen.
 | 58 | Auth-Härtung: offener Default-Endpoint + fehlende Server-Whitelist | geplant | mittel |
 | 59 | API-Key löschen: expliziter UI-Weg (statt nur Ersetzen) | geplant | klein–mittel |
 | 60 | Theme-Autosave: Fehler sichtbar statt nur in Browser-Konsole | erledigt | klein |
+| 61 | Cache-Busting-Test erzwingt keine Erhöhung bei geänderter Datei | geplant | klein–mittel |
+| 62 | Theme-Autosave: kein Request-Guard bei schnellen Themenwechseln | geplant | klein |
 
 ---
 
@@ -1724,5 +1726,37 @@ Ein zentrales Hilfsskript (z. B. `scripts/bump_version.sh` oder ähnlich), das d
 - Fehlerbehandlung in `gui/static/app.js` sowohl im `!response.ok`-Pfad als auch im `catch`-Pfad integriert (`console.error` bleibt erhalten).
 - Vor jedem neuen Speicherversuch sowie bei Erfolg wird die Fehlermeldung zurückgesetzt.
 - Vollständige Frontend-Testsuite in `tests/frontend/theme_autosave.test.js` (AK1–AK5).
+
+**Aufwand (grob):** Klein.
+
+---
+
+## 61. Cache-Busting-Test erzwingt keine Erhöhung bei geänderter Datei
+
+**Einordnung / Priorität:** Aufgefallen beim Deployment von Item #60 (10.09.2026) — real durchgeschlüpft, nicht theoretisch.
+
+**Kontext / Herkunft:** In PR [#137](https://github.com/salutaris91/Medienwerkzeug/pull/137) haben sich `gui/static/app.js` und `gui/static/style.css` geändert, ihre `?v=`-Query-Strings aber nicht. Alle Tests und beide CI-Checks waren grün. Der Server lieferte nach dem Deployment nachweislich den neuen Code aus — ein Browser mit gecachtem `app.js?v=91` hätte trotzdem die alte Datei behalten, und `.theme-autosave-error` wäre gar nicht geladen worden. Nachgezogen in PR [#138](https://github.com/salutaris91/Medienwerkzeug/pull/138) (`app.js` 91→92, `style.css` 45→46).
+
+`tests/frontend/cache_busting.test.js` prüft heute nur die **Konsistenz**: dass die Version in `index.html` mit den ES-Modul-Importen in `app.js` übereinstimmt und dass `style.css`/`utilities.css` überhaupt ein `?v=` tragen. Ob bei einer geänderten Datei hochgezählt wurde, prüft niemand — genau diese Lücke hat #137 passieren lassen.
+
+**Lösungsidee:**
+- Ein Test bzw. CI-Schritt, der für jede im Diff geänderte Datei mit Cache-Buster (`app.js`, `style.css`, `utilities.css`) verlangt, dass deren `?v=`-Wert gegenüber dem Basis-Branch gestiegen ist.
+- Alternativ den Zähler beim Build aus Commit-Hash oder Datei-Hash erzeugen, statt ihn von Hand zu pflegen — dann entfällt die Fehlerquelle ganz. Trade-off: berührt den Build-Weg und damit mehr als nur einen Test.
+
+**Aufwand (grob):** Klein (Test) bis mittel (generierter Zähler).
+
+---
+
+## 62. Theme-Autosave: kein Request-Guard bei schnellen Themenwechseln
+
+**Einordnung / Priorität:** Befund des `advocatus` aus der Rückkanal-Abnahme zu Item #60 (08.09.2026), ausdrücklich als Nicht-Blocker eingestuft. Rohoutput: `docs/sessions/2026-09-08-theme-autosave-rueckblick/advocatus.md`.
+
+**Kontext / Herkunft:** Der `change`-Handler des Farbthema-Dropdowns (`gui/static/app.js`) ist `async`, hat aber weder Request-Guard noch Debounce noch eine `finally`-Absicherung. Zwei schnelle Themenwechsel erzeugen zwei parallele `POST /api/settings`. Welche Antwort zuletzt eintrifft, ist nicht festgelegt — der zuletzt angezeigte Fehlerhinweis muss also nicht zum zuletzt gewählten Theme gehören, und ein erfolgreicher zweiter Request kann den Fehlerhinweis des ersten überschreiben oder umgekehrt.
+
+Praktische Auswirkung heute gering (Theme-Save schlägt auf `localhost` praktisch nie fehl), und bewusst außerhalb des Scopes von Item #60 gehalten.
+
+**Lösungsidee:**
+- Laufende Anfrage merken und bei einem neuen Wechsel abbrechen (`AbortController`), oder das Dropdown bis zur Antwort sperren.
+- Alternativ ein kurzer Debounce vor dem Speichern.
 
 **Aufwand (grob):** Klein.
